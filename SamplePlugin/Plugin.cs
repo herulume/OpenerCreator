@@ -27,6 +27,7 @@ namespace SamplePlugin
             this.CommandManager = commandManager;
 
             this.Hook = new OnActionHook(gameInteropProvider, chatGui);
+            this.Hook.Enable();
 
             this.Configuration = this.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             this.Configuration.Initialize(this.PluginInterface);
