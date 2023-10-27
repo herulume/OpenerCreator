@@ -1,6 +1,6 @@
-﻿using Dalamud.Configuration;
+﻿using System;
+using Dalamud.Configuration;
 using Dalamud.Plugin;
-using System;
 
 namespace SamplePlugin
 {
