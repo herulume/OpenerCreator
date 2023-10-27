@@ -11,31 +11,31 @@ namespace SamplePlugin
         public string Name => "Sample Plugin";
         private const string HookCommand = "/lea";
 
-        private DalamudPluginInterface PluginInterface { get; init; }
-        private ICommandManager CommandManager { get; init; }
+        // private DalamudPluginInterface PluginInterface { get; init; }
+        // private ICommandManager CommandManager { get; init; }
         public Configuration Configuration { get; init; }
+		private Gui.OpenerCreator OpenerCreatorGui { get; init; }
 
         private OnActionHook Hook { get; init; }
 
-        public Plugin(
-            [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
-            [RequiredVersion("1.0")] ICommandManager commandManager,
-            [RequiredVersion("1.0")] IChatGui chatGui,
-            [RequiredVersion("1.0")] IGameInteropProvider gameInteropProvider,
-            [RequiredVersion("1.0")] IDataManager dataManager,
-            [RequiredVersion("1.0")] IClientState clientState)
-        {
-            this.PluginInterface = pluginInterface;
-            this.CommandManager = commandManager;
+		[PluginService][RequiredVersion("1.0")] public static DalamudPluginInterface PluginInterface     {get; private set;} = null!;
+		[PluginService][RequiredVersion("1.0")] public static ICommandManager        CommandManager      {get; private set;} = null!;
+		[PluginService][RequiredVersion("1.0")] public static IChatGui               ChatGui             {get; private set;} = null!;
+		[PluginService][RequiredVersion("1.0")] public static IGameInteropProvider   GameInteropProvider {get; private set;} = null!;
+		[PluginService][RequiredVersion("1.0")] public static IDataManager           DataManager         {get; private set;} = null!;
+		[PluginService][RequiredVersion("1.0")] public static IClientState           ClientState         {get; private set;} = null!;
 
-            this.Hook = new OnActionHook(gameInteropProvider, chatGui, dataManager, clientState, new Helpers.ActionDictionary(dataManager));
+        public Plugin() {
+            this.Hook = new OnActionHook(GameInteropProvider, ChatGui, DataManager, ClientState, new Helpers.ActionDictionary(DataManager));
 
-            this.Configuration = this.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-            this.Configuration.Initialize(this.PluginInterface);
+            this.Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+            this.Configuration.Initialize(PluginInterface);
 
+			OpenerCreatorGui = new Gui.OpenerCreator();
 
+			PluginInterface.UiBuilder.Draw += Draw;
 
-            this.CommandManager.AddHandler(HookCommand, new CommandInfo(OnCommand)
+            CommandManager.AddHandler(HookCommand, new CommandInfo(OnCommand)
             {
                 HelpMessage = "A useful message to display in /xlhelp"
             });
@@ -43,9 +43,14 @@ namespace SamplePlugin
 
         public void Dispose()
         {
-            this.CommandManager.RemoveHandler(HookCommand);
+            CommandManager.RemoveHandler(HookCommand);
             this.Hook.Dispose();
+			OpenerCreatorGui.Dispose();
         }
+		
+		private void Draw() {
+			OpenerCreatorGui.Draw();
+		}
 
         private void OnCommand(string command, string args)
         {
