@@ -69,7 +69,7 @@ namespace OpenerCreator.Managers
                         var actual = ActionDictionary.Instance.GetActionName(used[i]);
                         OpenerCreator.ChatGui.Print(new XivChatEntry
                         {
-                            Message = $"Difference found at action number {i + 1}: Should use {intended}, used {actual}",
+                            Message = $"Difference in action {i + 1}: Substituted {actual} for {intended}",
                             Type = XivChatType.Echo
                         });
                     }

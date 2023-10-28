@@ -94,7 +94,7 @@ public class OpenerCreator : IDisposable
             });
         }
 
-        for (var i = 0; i < filteredActions.Count; i++)
+        for (var i = 0; i < Math.Min(5, filteredActions.Count); i++) // at max 5
         {
             var action = ActionDictionary.Instance.GetAction(filteredActions[i]);
             ImGui.Image(GetIcon(filteredActions[i]), new Vector2(iconSize, iconSize));

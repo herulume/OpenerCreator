@@ -52,7 +52,7 @@ namespace OpenerCreator.Hooks
             this.nactions = OpenerManager.Instance.GetOpener("live").Count;
             OpenerCreator.ChatGui.Print(new XivChatEntry
             {
-                Message = "Recording actions",
+                Message = "Recording actions.",
                 Type = XivChatType.Echo
             });
         }
@@ -63,15 +63,15 @@ namespace OpenerCreator.Hooks
             this.isActive = false;
             this.nactions = 0;
 
+            OpenerCreator.ChatGui.Print(new XivChatEntry
+            {
+                Message = $"Actions used: {string.Join(" => ", items.Select(x => x.Item1))}",
+                Type = XivChatType.Echo
+            });
 
             var opener = OpenerManager.Instance.GetOpener("live");
             if (opener.Count > 0)
             {
-                OpenerCreator.ChatGui.Print(new XivChatEntry
-                {
-                    Message = $"Actions used = {string.Join(", ", items.Select(x => x.Item1))}",
-                    Type = XivChatType.Echo
-                });
                 var used = items.Select(x => x.Item2).ToList();
                 OpenerManager.Compare(opener, used);
             }
@@ -80,11 +80,6 @@ namespace OpenerCreator.Hooks
                 OpenerCreator.ChatGui.Print(new XivChatEntry
                 {
                     Message = "No opener to compare to.",
-                    Type = XivChatType.Echo
-                });
-                OpenerCreator.ChatGui.Print(new XivChatEntry
-                {
-                    Message = $"Actions used = {string.Join(" => ", items.Select(x => x.Item1).ToList())}",
                     Type = XivChatType.Echo
                 });
             }
