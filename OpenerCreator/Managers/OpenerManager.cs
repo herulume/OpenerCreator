@@ -14,11 +14,13 @@ namespace OpenerCreator.Managers
         private static readonly object LockObject = new();
         public List<uint> Loaded { get; set; } = new List<uint>();
         private readonly Dictionary<string, List<uint>> openers;
-        private readonly string openersFile = Path.Combine(OpenerCreator.PluginInterface.AssemblyLocation.Directory!.FullName, "openers.json");
+        private readonly Dictionary<string, List<uint>> defaultOpeners;
+        private readonly string openersFile = Path.Combine(OpenerCreator.PluginInterface.ConfigDirectory.FullName, "openers.json");
 
         private OpenerManager()
         {
-            this.openers = LoadOpeners();
+            this.defaultOpeners = LoadOpeners(Path.Combine(OpenerCreator.PluginInterface.AssemblyLocation.Directory!.FullName, "openers.json"));
+            this.openers = LoadOpeners(openersFile);
         }
 
         public static OpenerManager Instance
@@ -77,11 +79,11 @@ namespace OpenerCreator.Managers
             Type = XivChatType.Echo
         });
 
-        private Dictionary<string, List<uint>> LoadOpeners()
+        private Dictionary<string, List<uint>> LoadOpeners(string path)
         {
             try
             {
-                var jsonData = File.ReadAllText(openersFile);
+                var jsonData = File.ReadAllText(path);
                 return JsonSerializer.Deserialize<Dictionary<string, List<uint>>>(jsonData)!;
             }
             catch (Exception e)

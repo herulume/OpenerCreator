@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using Dalamud.Game.Text;
 using Dalamud.Interface.Internal;
+using Dalamud.Utility;
 using ImGuiNET;
 using OpenerCreator.Helpers;
 using OpenerCreator.Managers;
@@ -98,7 +99,7 @@ public class OpenerCreatorWindow : IDisposable
             });
         }
         ImGui.SameLine();
-        if (ImGui.Button("Save opener"))
+        if (ImGui.Button("Save") && !name.IsNullOrEmpty())
         {
             OpenerManager.Instance.AddOpener(name, Actions);
             OpenerManager.Instance.SaveOpeners();
@@ -112,7 +113,7 @@ public class OpenerCreatorWindow : IDisposable
         ImGui.InputText("Opener name", ref name, 32);
 
 
-        for (var i = 0; i < Math.Min(5, filteredActions.Count); i++) // at max 5
+        for (var i = 0; i < Math.Min(20, filteredActions.Count); i++) // at max 5
         {
             var action = ActionDictionary.Instance.GetAction(filteredActions[i]);
             ImGui.Image(GetIcon(filteredActions[i]), new Vector2(IconSize, IconSize));
