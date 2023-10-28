@@ -50,14 +50,12 @@ namespace OpenerCreator.Managers
         public static void Compare(List<uint> opener, List<uint> used)
         {
             used = used.Take(opener.Count).ToList();
+            var error = false;
 
             if (opener.SequenceEqual(used))
             {
-                OpenerCreator.ChatGui.Print(new XivChatEntry
-                {
-                    Message = "Great job! Opener executed perfectly.",
-                    Type = XivChatType.Echo
-                });
+                SuccessMessage();
+                return;
             }
             else
             {
@@ -67,6 +65,7 @@ namespace OpenerCreator.Managers
                     var intended = ActionDictionary.Instance.GetActionName(opener[i]);
                     if (opener[i] != used[i] && !ActionDictionary.Instance.SameActions(intended, used[i]))
                     {
+                        error = true;
                         var actual = ActionDictionary.Instance.GetActionName(used[i]);
                         OpenerCreator.ChatGui.Print(new XivChatEntry
                         {
@@ -75,7 +74,16 @@ namespace OpenerCreator.Managers
                         });
                     }
                 }
+                if (!error)
+                {
+                    SuccessMessage();
+                }
             }
         }
+        private static void SuccessMessage() => OpenerCreator.ChatGui.Print(new XivChatEntry
+        {
+            Message = "Great job! Opener executed perfectly.",
+            Type = XivChatType.Echo
+        });
     }
 }

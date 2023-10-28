@@ -10,9 +10,7 @@ namespace OpenerCreator.Helpers
         private static ActionDictionary? instance;
         private static readonly object LockObject = new();
         private readonly Dictionary<uint, LuminaAction> actionsSheet;
-        private readonly Dictionary<uint, LuminaAction> nonRepeatedActions;
-
-
+        private readonly IEnumerable<LuminaAction> nonRepeatedActions;
 
         private ActionDictionary()
         {
@@ -20,9 +18,7 @@ namespace OpenerCreator.Helpers
                 .Where(IsPvEAction);
             actionsSheet = pve.ToDictionary(a => a.RowId);
             nonRepeatedActions = pve
-                .GroupBy(a => a.Name.ToString()) // ToString needed since SeStrings are different
-                .Select(a => a.First())
-                .ToDictionary(a => a.RowId);
+                .DistinctBy(a => a.Name.ToString()); // ToString needed since SeStrings are different
         }
 
         public static ActionDictionary Instance
@@ -40,7 +36,7 @@ namespace OpenerCreator.Helpers
             }
         }
 
-        public List<uint> NonRepeatedIdList() => nonRepeatedActions.Select(a => a.Key).ToList();
+        public List<uint> NonRepeatedIdList() => nonRepeatedActions.Select(a => a.RowId).ToList();
 
         public string GetActionName(uint id) => actionsSheet[id].Name.ToString();
 
@@ -49,16 +45,11 @@ namespace OpenerCreator.Helpers
         public ushort GetActionIcon(uint id) => actionsSheet[id].Icon;
 
         public List<uint> GetNonRepeatedActionsByName(string name) => nonRepeatedActions
-            .Where(a => a.Value.Name.ToString().ToLower().Contains(name.ToLower()))
-            .Select(a => a.Key)
+            .Where(a => a.Name.ToString().ToLower().Contains(name.ToLower()))
+            .Select(a => a.RowId)
             .ToList();
 
-        private List<uint> GetActionsByName(string name) => actionsSheet
-                    .Where(a => a.Value.Name.ToString().ToLower().Contains(name.ToLower()))
-                    .Select(a => a.Key)
-                    .ToList();
-
-        public bool SameActions(string name, uint a) => GetActionsByName(name).Contains(a);
+        public bool SameActions(string name, uint aId) => actionsSheet[aId].Name.ToString().ToLower().Contains(name.ToLower());
 
         public static bool IsPvEAction(LuminaAction a) => (a.ActionCategory.Row is 2 or 3 or 4) // GCD or Weaponskill or oGCD
                                                                                                 // && a.IsPlayerAction this will remove abilities like Paradox and Mudras and pet actions
