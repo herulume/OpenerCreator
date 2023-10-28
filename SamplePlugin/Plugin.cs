@@ -16,7 +16,7 @@ namespace SamplePlugin
         public Configuration Configuration { get; init; }
         private Gui.OpenerCreator OpenerCreatorGui { get; init; }
 
-        private OnActionHook Hook { get; init; }
+        private OnUsedActionHook Hook { get; init; }
 
         [PluginService][RequiredVersion("1.0")] public static DalamudPluginInterface PluginInterface { get; private set; } = null!;
         [PluginService][RequiredVersion("1.0")] public static ICommandManager CommandManager { get; private set; } = null!;
@@ -27,7 +27,7 @@ namespace SamplePlugin
 
         public Plugin()
         {
-            this.Hook = new OnActionHook(GameInteropProvider, ChatGui, DataManager, ClientState, new Helpers.ActionDictionary(DataManager));
+            this.Hook = new OnUsedActionHook();
 
             this.Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             this.Configuration.Initialize(PluginInterface);

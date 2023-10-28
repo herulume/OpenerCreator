@@ -103,7 +103,7 @@ public class OpenerCreator : IDisposable
             ImGui.SameLine();
             ImGui.Text(action.Name.ToString());
         }
-        
+
         ImGui.EndChild();
 
         ImGui.End();
