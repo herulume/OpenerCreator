@@ -8,7 +8,7 @@ namespace OpenerCreator
 {
     public sealed class OpenerCreator : IDalamudPlugin
     {
-        public string Name => "Opener Creator";
+        public string Name => "OpenerCreator";
         private readonly string command = "/ocrt";
         public Configuration Configuration { get; init; }
         private Gui.OpenerCreator OpenerCreatorGui { get; init; }
