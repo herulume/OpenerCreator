@@ -13,7 +13,7 @@ public class OpenerCreator : IDisposable
     public List<uint> Actions;
 
     private Dictionary<uint, IDalamudTextureWrap> iconCache;
-    private List<Lumina.Excel.GeneratedSheets.Action> actionsSheet;
+	private Dictionary<uint, Lumina.Excel.GeneratedSheets.Action> actionsSheet;
     private string search;
     private List<uint> filteredActions;
 
@@ -24,14 +24,15 @@ public class OpenerCreator : IDisposable
         Enabled = true; // TODO for lea: change this to false and add a command
         Actions = new();
         iconCache = new();
-        actionsSheet = Plugin.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Action>()!.ToList();
+        actionsSheet = Plugin.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Action>()!
+			.Where(a =>
+				(a.ActionCategory.Row == 2 || a.ActionCategory.Row == 4)
+				&& a.IsPlayerAction
+				&& !a.IsPvP
+				&& a.ClassJobLevel > 0)
+			.ToDictionary(a => a.RowId);
         search = "";
-        filteredActions = actionsSheet.Where(a =>
-                        (a.ActionCategory.Row == 2 || a.ActionCategory.Row == 4)
-                        && a.IsPlayerAction
-                        && !a.IsPvP
-                        && a.ClassJobLevel > 0
-                        ).Select(a => a.RowId).ToList();
+        filteredActions = actionsSheet.Select(a => a.Key).ToList();
 
     }
 
@@ -53,7 +54,7 @@ public class OpenerCreator : IDisposable
         var padding = ImGui.GetStyle().FramePadding;
         var icons_per_line = (int)Math.Floor((ImGui.GetContentRegionAvail().X - padding.X * 2.0 + spacing.X) / (iconSize + spacing.X));
         var lines = (float)Math.Max(Math.Ceiling(Actions.Count / (float)icons_per_line), 1);
-        ImGui.BeginChildFrame(2426787, new Vector2(ImGui.GetContentRegionAvail().X, lines * (iconSize + spacing.Y) - spacing.Y + padding.Y * 2), ImGuiWindowFlags.NoScrollbar);
+        ImGui.BeginChildFrame(2426787, new Vector2(ImGui.GetContentRegionAvail().X, lines * (iconSize + spacing.Y) - spacing.Y + padding.Y * 2), ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
 
         int? delete = null;
         for (var i = 0; i < Actions.Count; i++)
@@ -67,7 +68,7 @@ public class OpenerCreator : IDisposable
 
             ImGui.Image(GetIcon(Actions[i]), new Vector2(iconSize, iconSize));
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip(actionsSheet.Find(a => a.RowId == Actions[i])!.Name.ToString());
+                ImGui.SetTooltip(actionsSheet[Actions[i]].Name.ToString());
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 delete = i;
         }
@@ -83,24 +84,11 @@ public class OpenerCreator : IDisposable
         {
             if (search.Length > 0)
                 filteredActions = actionsSheet
-                    .Where(a =>
-                        (a.ActionCategory.Row == 2 || a.ActionCategory.Row == 4)
-                        && a.IsPlayerAction
-                        && !a.IsPvP
-                        && a.ClassJobLevel > 0
-                        && a.Name.ToString().ToLower().Contains(search.ToLower())
-                        )
-                    .Select(a => a.RowId).
-                    ToList();
+                    .Where(a => a.Value.Name.ToString().ToLower().Contains(search.ToLower()))
+                    .Select(a => a.Key)
+					.ToList();
             else
-                filteredActions = actionsSheet
-                    .Where(a =>
-                        (a.ActionCategory.Row == 2 || a.ActionCategory.Row == 4)
-                        && a.IsPlayerAction
-                        && !a.IsPvP
-                        && a.ClassJobLevel > 0
-                        )
-                    .Select(a => a.RowId).ToList();
+                filteredActions = actionsSheet.Select(a => a.Key).ToList();
         }
 
         ImGui.Text($"{filteredActions.Count} Results");
@@ -109,7 +97,7 @@ public class OpenerCreator : IDisposable
         {
             for (var i = 0; i < filteredActions.Count; i++)
             {
-                var action = actionsSheet.Find(a => a.RowId == filteredActions[i])!;
+				var action = actionsSheet[filteredActions[i]];
                 ImGui.Image(GetIcon(filteredActions[i]), new Vector2(iconSize, iconSize));
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
                     Actions.Add(filteredActions[i]);
@@ -131,7 +119,7 @@ public class OpenerCreator : IDisposable
     {
         if (!iconCache.ContainsKey(id))
         {
-            var icon = actionsSheet.Find(a => a.RowId == id)!.Icon.ToString("D6");
+            var icon = actionsSheet[id].Icon.ToString("D6");
             var path = $"ui/icon/{icon[0]}{icon[1]}{icon[2]}000/{icon}_hr1.tex";
             // Dalamud.Logging.PluginLog.Log(path);
             var data = Plugin.DataManager.GetFile<Lumina.Data.Files.TexFile>(path)!;
