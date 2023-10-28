@@ -26,7 +26,7 @@ public class OpenerCreator : IDisposable
         Actions = new();
         iconCache = new();
         search = "";
-        filteredActions = ActionDictionary.Instance.ToIdList();
+        filteredActions = ActionDictionary.Instance.NonRepeatedIdList();
     }
 
     public void Dispose()
@@ -72,16 +72,14 @@ public class OpenerCreator : IDisposable
         ImGui.Dummy(Vector2.Zero);
         ImGui.EndChildFrame();
 
-
-
         // ability filter
         ImGui.BeginChild("allactions");
         if (ImGui.InputText("Search", ref search, 64))
         {
             if (search.Length > 0)
-                filteredActions = ActionDictionary.Instance.GetActionsByName(search);
+                filteredActions = ActionDictionary.Instance.GetNonRepeatedActionsByName(search);
             else
-                filteredActions = ActionDictionary.Instance.ToIdList();
+                filteredActions = ActionDictionary.Instance.NonRepeatedIdList();
         }
 
         ImGui.Text($"{filteredActions.Count} Results");

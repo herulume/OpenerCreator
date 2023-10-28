@@ -10,12 +10,18 @@ namespace OpenerCreator.Helpers
         private static ActionDictionary? instance;
         private static readonly object LockObject = new();
         private readonly Dictionary<uint, LuminaAction> actionsSheet;
+        private readonly Dictionary<uint, LuminaAction> nonRepeatedActions;
+
 
 
         private ActionDictionary()
         {
-            actionsSheet = OpenerCreator.DataManager.GetExcelSheet<LuminaAction>()!
-                .Where(IsPvEAction)
+            var pve = OpenerCreator.DataManager.GetExcelSheet<LuminaAction>()!
+                .Where(IsPvEAction);
+            actionsSheet = pve.ToDictionary(a => a.RowId);
+            nonRepeatedActions = pve
+                .GroupBy(a => a.Name.ToString()) // ToString needed since SeStrings are different
+                .Select(a => a.First())
                 .ToDictionary(a => a.RowId);
         }
 
@@ -34,7 +40,7 @@ namespace OpenerCreator.Helpers
             }
         }
 
-        public List<uint> ToIdList() => actionsSheet.Select(a => a.Key).ToList();
+        public List<uint> NonRepeatedIdList() => nonRepeatedActions.Select(a => a.Key).ToList();
 
         public string GetActionName(uint id) => actionsSheet[id].Name.ToString();
 
@@ -42,14 +48,22 @@ namespace OpenerCreator.Helpers
 
         public ushort GetActionIcon(uint id) => actionsSheet[id].Icon;
 
-        public List<uint> GetActionsByName(string name) => actionsSheet
+        public List<uint> GetNonRepeatedActionsByName(string name) => nonRepeatedActions
+            .Where(a => a.Value.Name.ToString().ToLower().Contains(name.ToLower()))
+            .Select(a => a.Key)
+            .ToList();
+
+        private List<uint> GetActionsByName(string name) => actionsSheet
                     .Where(a => a.Value.Name.ToString().ToLower().Contains(name.ToLower()))
                     .Select(a => a.Key)
                     .ToList();
 
+        public bool SameActions(string name, uint a) => GetActionsByName(name).Contains(a);
+
         public static bool IsPvEAction(LuminaAction a) => (a.ActionCategory.Row is 2 or 3 or 4) // GCD or Weaponskill or oGCD
-                        && a.IsPlayerAction
+                                                                                                // && a.IsPlayerAction this will remove abilities like Paradox and Mudras and pet actions
                         && !a.IsPvP
-                        && a.ClassJobLevel > 0; // not an old action
+                        && a.ClassJobLevel > 0 // not an old action
+                        && a.ClassJobCategory.Row != 0; // not an old action
     }
 }

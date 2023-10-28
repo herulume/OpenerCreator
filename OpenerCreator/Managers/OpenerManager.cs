@@ -61,18 +61,12 @@ namespace OpenerCreator.Managers
             }
             else
             {
-                OpenerCreator.ChatGui.Print(new XivChatEntry
-                {
-                    Message = "There were some mistakes: ",
-                    Type = XivChatType.Echo
-                });
-
                 // Identify differences
                 for (var i = 0; i < Math.Min(opener.Count, used.Count); i++)
                 {
-                    if (opener[i] != used[i])
+                    var intended = ActionDictionary.Instance.GetActionName(opener[i]);
+                    if (opener[i] != used[i] && !ActionDictionary.Instance.SameActions(intended, used[i]))
                     {
-                        var intended = ActionDictionary.Instance.GetActionName(opener[i]);
                         var actual = ActionDictionary.Instance.GetActionName(used[i]);
                         OpenerCreator.ChatGui.Print(new XivChatEntry
                         {
