@@ -13,7 +13,7 @@ public class OpenerCreator : IDisposable
     public List<uint> Actions;
 
     private Dictionary<uint, IDalamudTextureWrap> iconCache;
-	private Dictionary<uint, Lumina.Excel.GeneratedSheets.Action> actionsSheet;
+    private Dictionary<uint, Lumina.Excel.GeneratedSheets.Action> actionsSheet;
     private string search;
     private List<uint> filteredActions;
 
@@ -25,12 +25,12 @@ public class OpenerCreator : IDisposable
         Actions = new();
         iconCache = new();
         actionsSheet = Plugin.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Action>()!
-			.Where(a =>
-				(a.ActionCategory.Row == 2 || a.ActionCategory.Row == 4)
-				&& a.IsPlayerAction
-				&& !a.IsPvP
-				&& a.ClassJobLevel > 0)
-			.ToDictionary(a => a.RowId);
+            .Where(a =>
+                (a.ActionCategory.Row == 2 || a.ActionCategory.Row == 4)
+                && a.IsPlayerAction
+                && !a.IsPvP
+                && a.ClassJobLevel > 0)
+            .ToDictionary(a => a.RowId);
         search = "";
         filteredActions = actionsSheet.Select(a => a.Key).ToList();
 
@@ -86,30 +86,24 @@ public class OpenerCreator : IDisposable
                 filteredActions = actionsSheet
                     .Where(a => a.Value.Name.ToString().ToLower().Contains(search.ToLower()))
                     .Select(a => a.Key)
-					.ToList();
+                    .ToList();
             else
                 filteredActions = actionsSheet.Select(a => a.Key).ToList();
         }
 
         ImGui.Text($"{filteredActions.Count} Results");
 
-        if (filteredActions.Count < 20)
+        for (var i = 0; i < filteredActions.Count; i++)
         {
-            for (var i = 0; i < filteredActions.Count; i++)
-            {
-				var action = actionsSheet[filteredActions[i]];
-                ImGui.Image(GetIcon(filteredActions[i]), new Vector2(iconSize, iconSize));
-                if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
-                    Actions.Add(filteredActions[i]);
+            var action = actionsSheet[filteredActions[i]];
+            ImGui.Image(GetIcon(filteredActions[i]), new Vector2(iconSize, iconSize));
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
+                Actions.Add(filteredActions[i]);
 
-                ImGui.SameLine();
-                ImGui.Text(action.Name.ToString());
-            }
+            ImGui.SameLine();
+            ImGui.Text(action.Name.ToString());
         }
-        else
-        {
-            ImGui.Text("Too many results to display");
-        }
+        
         ImGui.EndChild();
 
         ImGui.End();
