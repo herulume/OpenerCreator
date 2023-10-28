@@ -20,6 +20,7 @@ namespace SamplePlugin.Hooks
         private readonly ExcelSheet<LuminaAction>? sheet;
 
         private bool isActive;
+        private int nactions;
 
         private static readonly int MaxItemCount = 50;
         private readonly List<Tuple<string, uint>> items = new(MaxItemCount);
@@ -35,6 +36,7 @@ namespace SamplePlugin.Hooks
                 this.DetourUsedAction
                 );
             this.isActive = false;
+            this.nactions = 0;
         }
 
         public void Dispose()
@@ -47,24 +49,25 @@ namespace SamplePlugin.Hooks
         {
             this.usedActionHook?.Enable();
             this.isActive = true;
+            this.nactions = OpenerManager.Instance.GetOpener("live").Count;
         }
 
         public void Disable()
         {
             this.usedActionHook?.Disable();
             this.isActive = false;
+            this.nactions = 0;
+
 
             var opener = OpenerManager.Instance.GetOpener("live");
             if (opener.Count > 0)
             {
-
-                var actions = items.Take(opener.Count);
                 Plugin.ChatGui.Print(new XivChatEntry
                 {
-                    Message = $"Actions used = {string.Join(", ", actions.Select(x => x.Item1))}",
+                    Message = $"Actions used = {string.Join(", ", items.Select(x => x.Item1))}",
                     Type = XivChatType.Echo
                 });
-                var used = actions.Select(x => x.Item2).ToList();
+                var used = items.Select(x => x.Item2).ToList();
                 OpenerManager.Compare(opener, used);
             }
             else
@@ -89,6 +92,7 @@ namespace SamplePlugin.Hooks
         {
             this.usedActionHook?.Original(sourceId, sourceCharacter, pos, effectHeader, effectArray, effectTrail);
 
+
             var player = Plugin.ClientState.LocalPlayer;
             if (player == null || sourceId != player.ObjectId) { return; }
 
@@ -97,6 +101,12 @@ namespace SamplePlugin.Hooks
             if (action != null && ActionDictionary.IsPvEAction(action))
             {
                 items.Add(Tuple.Create(action.Name.ToString(), actionId));
+                nactions--;
+                if (this.nactions == 0)
+                {
+                    this.Disable();
+                    return;
+                }
 
             }
         }

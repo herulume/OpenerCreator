@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dalamud.Game.Text;
+using SamplePlugin.Helpers;
 
 namespace SamplePlugin.Managers
 {
@@ -48,8 +49,9 @@ namespace SamplePlugin.Managers
 
         public static void Compare(List<uint> opener, List<uint> used)
         {
-            bool areEqual = opener.SequenceEqual(used);
-            if (areEqual)
+            used = used.Take(opener.Count).ToList();
+
+            if (opener.SequenceEqual(used))
             {
                 Plugin.ChatGui.Print(new XivChatEntry
                 {
@@ -70,9 +72,11 @@ namespace SamplePlugin.Managers
                 {
                     if (opener[i] != used[i])
                     {
+                        var intended = ActionDictionary.Instance.GetActionName(opener[i]);
+                        var actual = ActionDictionary.Instance.GetActionName(used[i]);
                         Plugin.ChatGui.Print(new XivChatEntry
                         {
-                            Message = $"Difference found at action number {i + 1}: Should use {opener[i]}, used {used[i]}",
+                            Message = $"Difference found at action number {i + 1}: Should use {intended}, used {actual}",
                             Type = XivChatType.Echo
                         });
                     }
