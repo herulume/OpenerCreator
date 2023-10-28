@@ -14,26 +14,27 @@ namespace SamplePlugin
         // private DalamudPluginInterface PluginInterface { get; init; }
         // private ICommandManager CommandManager { get; init; }
         public Configuration Configuration { get; init; }
-		private Gui.OpenerCreator OpenerCreatorGui { get; init; }
+        private Gui.OpenerCreator OpenerCreatorGui { get; init; }
 
         private OnActionHook Hook { get; init; }
 
-		[PluginService][RequiredVersion("1.0")] public static DalamudPluginInterface PluginInterface     {get; private set;} = null!;
-		[PluginService][RequiredVersion("1.0")] public static ICommandManager        CommandManager      {get; private set;} = null!;
-		[PluginService][RequiredVersion("1.0")] public static IChatGui               ChatGui             {get; private set;} = null!;
-		[PluginService][RequiredVersion("1.0")] public static IGameInteropProvider   GameInteropProvider {get; private set;} = null!;
-		[PluginService][RequiredVersion("1.0")] public static IDataManager           DataManager         {get; private set;} = null!;
-		[PluginService][RequiredVersion("1.0")] public static IClientState           ClientState         {get; private set;} = null!;
+        [PluginService][RequiredVersion("1.0")] public static DalamudPluginInterface PluginInterface { get; private set; } = null!;
+        [PluginService][RequiredVersion("1.0")] public static ICommandManager CommandManager { get; private set; } = null!;
+        [PluginService][RequiredVersion("1.0")] public static IChatGui ChatGui { get; private set; } = null!;
+        [PluginService][RequiredVersion("1.0")] public static IGameInteropProvider GameInteropProvider { get; private set; } = null!;
+        [PluginService][RequiredVersion("1.0")] public static IDataManager DataManager { get; private set; } = null!;
+        [PluginService][RequiredVersion("1.0")] public static IClientState ClientState { get; private set; } = null!;
 
-        public Plugin() {
+        public Plugin()
+        {
             this.Hook = new OnActionHook(GameInteropProvider, ChatGui, DataManager, ClientState, new Helpers.ActionDictionary(DataManager));
 
             this.Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             this.Configuration.Initialize(PluginInterface);
 
-			OpenerCreatorGui = new Gui.OpenerCreator();
+            OpenerCreatorGui = new Gui.OpenerCreator();
 
-			PluginInterface.UiBuilder.Draw += Draw;
+            PluginInterface.UiBuilder.Draw += Draw;
 
             CommandManager.AddHandler(HookCommand, new CommandInfo(OnCommand)
             {
@@ -45,12 +46,13 @@ namespace SamplePlugin
         {
             CommandManager.RemoveHandler(HookCommand);
             this.Hook.Dispose();
-			OpenerCreatorGui.Dispose();
+            OpenerCreatorGui.Dispose();
         }
-		
-		private void Draw() {
-			OpenerCreatorGui.Draw();
-		}
+
+        private void Draw()
+        {
+            OpenerCreatorGui.Draw();
+        }
 
         private void OnCommand(string command, string args)
         {
