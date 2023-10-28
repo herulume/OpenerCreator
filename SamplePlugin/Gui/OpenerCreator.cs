@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 using Dalamud.Interface.Internal;
 using ImGuiNET;
+using SamplePlugin.Helpers;
 
 namespace SamplePlugin.Gui;
 
@@ -13,7 +13,6 @@ public class OpenerCreator : IDisposable
     public List<uint> Actions;
 
     private Dictionary<uint, IDalamudTextureWrap> iconCache;
-    private Dictionary<uint, Lumina.Excel.GeneratedSheets.Action> actionsSheet;
     private string search;
     private List<uint> filteredActions;
 
@@ -24,16 +23,8 @@ public class OpenerCreator : IDisposable
         Enabled = true; // TODO for lea: change this to false and add a command
         Actions = new();
         iconCache = new();
-        actionsSheet = Plugin.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Action>()!
-            .Where(a =>
-                (a.ActionCategory.Row == 2 || a.ActionCategory.Row == 4)
-                && a.IsPlayerAction
-                && !a.IsPvP
-                && a.ClassJobLevel > 0)
-            .ToDictionary(a => a.RowId);
         search = "";
-        filteredActions = actionsSheet.Select(a => a.Key).ToList();
-
+        filteredActions = ActionDictionary.Instance.ToIdList();
     }
 
     public void Dispose()
@@ -68,7 +59,7 @@ public class OpenerCreator : IDisposable
 
             ImGui.Image(GetIcon(Actions[i]), new Vector2(iconSize, iconSize));
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip(actionsSheet[Actions[i]].Name.ToString());
+                ImGui.SetTooltip(ActionDictionary.Instance.GetActionName(Actions[i]));
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 delete = i;
         }
@@ -83,19 +74,16 @@ public class OpenerCreator : IDisposable
         if (ImGui.InputText("Search", ref search, 64))
         {
             if (search.Length > 0)
-                filteredActions = actionsSheet
-                    .Where(a => a.Value.Name.ToString().ToLower().Contains(search.ToLower()))
-                    .Select(a => a.Key)
-                    .ToList();
+                filteredActions = ActionDictionary.Instance.GetActionsByName(search);
             else
-                filteredActions = actionsSheet.Select(a => a.Key).ToList();
+                filteredActions = ActionDictionary.Instance.ToIdList();
         }
 
         ImGui.Text($"{filteredActions.Count} Results");
 
         for (var i = 0; i < filteredActions.Count; i++)
         {
-            var action = actionsSheet[filteredActions[i]];
+            var action = ActionDictionary.Instance.GetAction(filteredActions[i]);
             ImGui.Image(GetIcon(filteredActions[i]), new Vector2(iconSize, iconSize));
             if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
                 Actions.Add(filteredActions[i]);
@@ -113,7 +101,7 @@ public class OpenerCreator : IDisposable
     {
         if (!iconCache.ContainsKey(id))
         {
-            var icon = actionsSheet[id].Icon.ToString("D6");
+            var icon = ActionDictionary.Instance.GetActionIcon(id).ToString("D6");
             var path = $"ui/icon/{icon[0]}{icon[1]}{icon[2]}000/{icon}_hr1.tex";
             // Dalamud.Logging.PluginLog.Log(path);
             var data = Plugin.DataManager.GetFile<Lumina.Data.Files.TexFile>(path)!;
