@@ -1,3 +1,4 @@
+using System;
 using Dalamud.Game.Command;
 using Dalamud.IoC;
 using Dalamud.Plugin;
@@ -8,8 +9,12 @@ namespace OpenerCreator
 {
     public sealed class OpenerCreator : IDalamudPlugin
     {
-        public string Name => "Sample Plugin";
-        private const string HookCommand = "/lea";
+        public string Name => "Opener Creator";
+        private readonly Tuple<string, string>[] commands =
+           {
+                Tuple.Create("/ocrt create", "Create your opener."),
+                Tuple.Create("/ocrt run", "Toggle to record your actions and run them against your opener, if defined."),
+            };
 
         // private DalamudPluginInterface PluginInterface { get; init; }
         // private ICommandManager CommandManager { get; init; }
@@ -37,15 +42,23 @@ namespace OpenerCreator
 
             PluginInterface.UiBuilder.Draw += Draw;
 
-            CommandManager.AddHandler(HookCommand, new CommandInfo(OnCommand)
+            CommandManager.AddHandler(commands[0].Item1, new CommandInfo(OnCreateCommand)
             {
-                HelpMessage = "A useful message to display in /xlhelp"
+                HelpMessage = commands[0].Item2
+            });
+
+            CommandManager.AddHandler(commands[1].Item1, new CommandInfo(OnRunCommand)
+            {
+                HelpMessage = commands[1].Item2
             });
         }
 
         public void Dispose()
         {
-            CommandManager.RemoveHandler(HookCommand);
+            for (var i = 0; i < this.commands.Length; i++)
+            {
+                CommandManager.RemoveHandler(commands[i].Item1);
+            }
             this.Hook.Dispose();
             OpenerCreatorGui.Dispose();
         }
@@ -55,7 +68,7 @@ namespace OpenerCreator
             OpenerCreatorGui.Draw();
         }
 
-        private void OnCommand(string command, string args)
+        private void OnRunCommand(string command, string args)
         {
             if (this.Hook.IsActive())
             {
@@ -65,6 +78,11 @@ namespace OpenerCreator
             {
                 this.Hook.Enable();
             }
+        }
+
+        private void OnCreateCommand(string command, string args)
+        {
+            OpenerCreatorGui.Enabled = true;
         }
     }
 }
