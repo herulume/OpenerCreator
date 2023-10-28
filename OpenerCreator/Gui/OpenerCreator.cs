@@ -22,7 +22,7 @@ public class OpenerCreator : IDisposable
 
     public OpenerCreator()
     {
-        Enabled = true; // TODO for lea: change this to false and add a command
+        Enabled = false;
         Actions = new();
         iconCache = new();
         search = "";

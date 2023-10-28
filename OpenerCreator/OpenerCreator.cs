@@ -1,4 +1,3 @@
-using System;
 using Dalamud.Game.Command;
 using Dalamud.IoC;
 using Dalamud.Plugin;
@@ -10,14 +9,7 @@ namespace OpenerCreator
     public sealed class OpenerCreator : IDalamudPlugin
     {
         public string Name => "Opener Creator";
-        private readonly Tuple<string, string>[] commands =
-           {
-                Tuple.Create("/ocrt create", "Create your opener."),
-                Tuple.Create("/ocrt run", "Toggle to record your actions and run them against your opener, if defined."),
-            };
-
-        // private DalamudPluginInterface PluginInterface { get; init; }
-        // private ICommandManager CommandManager { get; init; }
+        private readonly string command = "/ocrt";
         public Configuration Configuration { get; init; }
         private Gui.OpenerCreator OpenerCreatorGui { get; init; }
 
@@ -42,23 +34,19 @@ namespace OpenerCreator
 
             PluginInterface.UiBuilder.Draw += Draw;
 
-            CommandManager.AddHandler(commands[0].Item1, new CommandInfo(OnCreateCommand)
-            {
-                HelpMessage = commands[0].Item2
-            });
 
-            CommandManager.AddHandler(commands[1].Item1, new CommandInfo(OnRunCommand)
+            CommandManager.AddHandler(command, new CommandInfo(CommandParser)
             {
-                HelpMessage = commands[1].Item2
+                HelpMessage = @" create|run
+'create' to create your opener.
+'run' to record your actions and run them against your opener, if defined."
             });
         }
 
         public void Dispose()
         {
-            for (var i = 0; i < this.commands.Length; i++)
-            {
-                CommandManager.RemoveHandler(commands[i].Item1);
-            }
+
+            CommandManager.RemoveHandler(command);
             this.Hook.Dispose();
             OpenerCreatorGui.Dispose();
         }
@@ -68,7 +56,25 @@ namespace OpenerCreator
             OpenerCreatorGui.Draw();
         }
 
-        private void OnRunCommand(string command, string args)
+        private void CommandParser(string command, string args)
+        {
+            var sargs = args.ToLower().Split(null);
+            if (sargs.Length != 1) { return; }
+
+            switch (sargs[0])
+            {
+                case "create":
+                    OnCreateCommand();
+                    break;
+                case "run":
+                    OnRunCommand();
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private void OnRunCommand()
         {
             if (this.Hook.IsActive())
             {
@@ -80,7 +86,7 @@ namespace OpenerCreator
             }
         }
 
-        private void OnCreateCommand(string command, string args)
+        private void OnCreateCommand()
         {
             OpenerCreatorGui.Enabled = true;
         }
