@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using Dalamud.Game.Text;
 using Dalamud.Interface.Internal;
 using ImGuiNET;
 using SamplePlugin.Helpers;
+using SamplePlugin.Managers;
 
 namespace SamplePlugin.Gui;
 
@@ -70,6 +72,9 @@ public class OpenerCreator : IDisposable
         ImGui.Dummy(Vector2.Zero);
         ImGui.EndChildFrame();
 
+
+
+        // ability filter
         ImGui.BeginChild("allactions");
         if (ImGui.InputText("Search", ref search, 64))
         {
@@ -80,6 +85,16 @@ public class OpenerCreator : IDisposable
         }
 
         ImGui.Text($"{filteredActions.Count} Results");
+        ImGui.SameLine();
+        if (ImGui.Button("Save opener"))
+        {
+            OpenerManager.Instance.AddOrUpdate("live", Actions);
+            Plugin.ChatGui.Print(new XivChatEntry
+            {
+                Message = "Opener saved.",
+                Type = XivChatType.Echo
+            });
+        }
 
         for (var i = 0; i < filteredActions.Count; i++)
         {

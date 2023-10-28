@@ -15,13 +15,8 @@ namespace SamplePlugin.Helpers
         private ActionDictionary()
         {
             actionsSheet = Plugin.DataManager.GetExcelSheet<LuminaAction>()!
-                .Where(a =>
-                        (a.ActionCategory.Row == 2 || a.ActionCategory.Row == 4) // GCD or oGCD
-                        && a.IsPlayerAction
-                        && !a.IsPvP
-                        && a.ClassJobLevel > 0 // not an old action
-                    )
-            .ToDictionary(a => a.RowId);
+                .Where(IsPvEAction)
+                .ToDictionary(a => a.RowId);
         }
 
         public static ActionDictionary Instance
@@ -51,5 +46,10 @@ namespace SamplePlugin.Helpers
                     .Where(a => a.Value.Name.ToString().ToLower().Contains(name.ToLower()))
                     .Select(a => a.Key)
                     .ToList();
+
+        public static bool IsPvEAction(LuminaAction a) => (a.ActionCategory.Row is 2 or 3 or 4) // GCD or Weaponskill or oGCD
+                        && a.IsPlayerAction
+                        && !a.IsPvP
+                        && a.ClassJobLevel > 0; // not an old action
     }
 }

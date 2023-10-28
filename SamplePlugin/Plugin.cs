@@ -24,6 +24,7 @@ namespace SamplePlugin
         [PluginService][RequiredVersion("1.0")] public static IGameInteropProvider GameInteropProvider { get; private set; } = null!;
         [PluginService][RequiredVersion("1.0")] public static IDataManager DataManager { get; private set; } = null!;
         [PluginService][RequiredVersion("1.0")] public static IClientState ClientState { get; private set; } = null!;
+        [PluginService][RequiredVersion("1.0")] public static IPluginLog PluginLog { get; private set; } = null!;
 
         public Plugin()
         {
