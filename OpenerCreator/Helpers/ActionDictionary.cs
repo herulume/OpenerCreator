@@ -3,7 +3,7 @@ using System.Linq;
 using LuminaAction = Lumina.Excel.GeneratedSheets.Action;
 
 
-namespace SamplePlugin.Helpers
+namespace OpenerCreator.Helpers
 {
     public class ActionDictionary
     {
@@ -14,7 +14,7 @@ namespace SamplePlugin.Helpers
 
         private ActionDictionary()
         {
-            actionsSheet = Plugin.DataManager.GetExcelSheet<LuminaAction>()!
+            actionsSheet = OpenerCreator.DataManager.GetExcelSheet<LuminaAction>()!
                 .Where(IsPvEAction)
                 .ToDictionary(a => a.RowId);
         }

@@ -2,7 +2,7 @@
 using Dalamud.Configuration;
 using Dalamud.Plugin;
 
-namespace SamplePlugin
+namespace OpenerCreator
 {
     [Serializable]
     public class Configuration : IPluginConfiguration

@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 using Dalamud.Game.Text;
 using Dalamud.Hooking;
 using Lumina.Excel;
-using SamplePlugin.Helpers;
-using SamplePlugin.Managers;
+using OpenerCreator.Helpers;
+using OpenerCreator.Managers;
 using LuminaAction = Lumina.Excel.GeneratedSheets.Action;
 
 
-namespace SamplePlugin.Hooks
+namespace OpenerCreator.Hooks
 {
     public unsafe class OnUsedActionHook : IDisposable
     {
@@ -27,11 +27,11 @@ namespace SamplePlugin.Hooks
 
         public OnUsedActionHook()
         {
-            sheet = Plugin.DataManager.GetExcelSheet<LuminaAction>();
+            sheet = OpenerCreator.DataManager.GetExcelSheet<LuminaAction>();
 
             // credits to Tischel for the sig
             // https://github.com/Tischel/ActionTimeline/blob/master/ActionTimeline/Helpers/TimelineManager.cs#L87
-            this.usedActionHook = Plugin.GameInteropProvider.HookFromSignature<UsedActionDelegate>(
+            this.usedActionHook = OpenerCreator.GameInteropProvider.HookFromSignature<UsedActionDelegate>(
                 "40 55 53 57 41 54 41 55 41 56 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 70",
                 this.DetourUsedAction
                 );
@@ -62,7 +62,7 @@ namespace SamplePlugin.Hooks
             var opener = OpenerManager.Instance.GetOpener("live");
             if (opener.Count > 0)
             {
-                Plugin.ChatGui.Print(new XivChatEntry
+                OpenerCreator.ChatGui.Print(new XivChatEntry
                 {
                     Message = $"Actions used = {string.Join(", ", items.Select(x => x.Item1))}",
                     Type = XivChatType.Echo
@@ -72,12 +72,12 @@ namespace SamplePlugin.Hooks
             }
             else
             {
-                Plugin.ChatGui.Print(new XivChatEntry
+                OpenerCreator.ChatGui.Print(new XivChatEntry
                 {
                     Message = "No opener to compare to.",
                     Type = XivChatType.Echo
                 });
-                Plugin.ChatGui.Print(new XivChatEntry
+                OpenerCreator.ChatGui.Print(new XivChatEntry
                 {
                     Message = $"Actions used = {string.Join(" => ", items.Select(x => x.Item1).ToList())}",
                     Type = XivChatType.Echo
@@ -93,7 +93,7 @@ namespace SamplePlugin.Hooks
             this.usedActionHook?.Original(sourceId, sourceCharacter, pos, effectHeader, effectArray, effectTrail);
 
 
-            var player = Plugin.ClientState.LocalPlayer;
+            var player = OpenerCreator.ClientState.LocalPlayer;
             if (player == null || sourceId != player.ObjectId) { return; }
 
             var actionId = (uint)Marshal.ReadInt32(effectHeader, 0x8);

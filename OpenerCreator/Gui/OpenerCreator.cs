@@ -4,10 +4,10 @@ using System.Numerics;
 using Dalamud.Game.Text;
 using Dalamud.Interface.Internal;
 using ImGuiNET;
-using SamplePlugin.Helpers;
-using SamplePlugin.Managers;
+using OpenerCreator.Helpers;
+using OpenerCreator.Managers;
 
-namespace SamplePlugin.Gui;
+namespace OpenerCreator.Gui;
 
 public class OpenerCreator : IDisposable
 {
@@ -89,7 +89,7 @@ public class OpenerCreator : IDisposable
         if (ImGui.Button("Save opener"))
         {
             OpenerManager.Instance.AddOrUpdate("live", Actions);
-            Plugin.ChatGui.Print(new XivChatEntry
+            global::OpenerCreator.OpenerCreator.ChatGui.Print(new XivChatEntry
             {
                 Message = "Opener saved.",
                 Type = XivChatType.Echo
@@ -119,7 +119,7 @@ public class OpenerCreator : IDisposable
             var icon = ActionDictionary.Instance.GetActionIcon(id).ToString("D6");
             var path = $"ui/icon/{icon[0]}{icon[1]}{icon[2]}000/{icon}_hr1.tex";
             // Dalamud.Logging.PluginLog.Log(path);
-            var data = Plugin.DataManager.GetFile<Lumina.Data.Files.TexFile>(path)!;
+            var data = global::OpenerCreator.OpenerCreator.DataManager.GetFile<Lumina.Data.Files.TexFile>(path)!;
             var pixels = new byte[data.Header.Width * data.Header.Height * 4];
             for (var i = 0; i < data.Header.Width * data.Header.Height; i++)
             {
@@ -128,7 +128,7 @@ public class OpenerCreator : IDisposable
                 pixels[i * 4 + 2] = data.ImageData[i * 4 + 0];
                 pixels[i * 4 + 3] = data.ImageData[i * 4 + 3];
             }
-            iconCache[id] = Plugin.PluginInterface.UiBuilder.LoadImageRaw(pixels, data.Header.Width, data.Header.Height, 4);
+            iconCache[id] = global::OpenerCreator.OpenerCreator.PluginInterface.UiBuilder.LoadImageRaw(pixels, data.Header.Width, data.Header.Height, 4);
         }
 
         return iconCache[id].ImGuiHandle;

@@ -1,0 +1,13 @@
+{
+  "Author": "herulume, sevii",
+  "Name": "Opener Creator",
+  "Punchline": "Define and practice openers for your favourite job.",
+  "Description": "Create your opener and practice with a striking dummy. Provides basic analysis.",
+  "InternalName": "openerCreator",
+  "ApplicableVersion": "any",
+  "Tags": [
+    "pve",
+    "rotation",
+    "opener"
+  ]
+}

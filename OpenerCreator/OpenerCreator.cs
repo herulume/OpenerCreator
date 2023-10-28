@@ -2,11 +2,11 @@ using Dalamud.Game.Command;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using SamplePlugin.Hooks;
+using OpenerCreator.Hooks;
 
-namespace SamplePlugin
+namespace OpenerCreator
 {
-    public sealed class Plugin : IDalamudPlugin
+    public sealed class OpenerCreator : IDalamudPlugin
     {
         public string Name => "Sample Plugin";
         private const string HookCommand = "/lea";
@@ -26,7 +26,7 @@ namespace SamplePlugin
         [PluginService][RequiredVersion("1.0")] public static IClientState ClientState { get; private set; } = null!;
         [PluginService][RequiredVersion("1.0")] public static IPluginLog PluginLog { get; private set; } = null!;
 
-        public Plugin()
+        public OpenerCreator()
         {
             this.Hook = new OnUsedActionHook();
 

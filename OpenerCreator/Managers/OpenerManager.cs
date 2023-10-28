@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dalamud.Game.Text;
-using SamplePlugin.Helpers;
+using OpenerCreator.Helpers;
 
-namespace SamplePlugin.Managers
+namespace OpenerCreator.Managers
 {
     public class OpenerManager
     {
@@ -53,7 +53,7 @@ namespace SamplePlugin.Managers
 
             if (opener.SequenceEqual(used))
             {
-                Plugin.ChatGui.Print(new XivChatEntry
+                OpenerCreator.ChatGui.Print(new XivChatEntry
                 {
                     Message = "Great job! Opener executed perfectly.",
                     Type = XivChatType.Echo
@@ -61,7 +61,7 @@ namespace SamplePlugin.Managers
             }
             else
             {
-                Plugin.ChatGui.Print(new XivChatEntry
+                OpenerCreator.ChatGui.Print(new XivChatEntry
                 {
                     Message = "There were some mistakes: ",
                     Type = XivChatType.Echo
@@ -74,7 +74,7 @@ namespace SamplePlugin.Managers
                     {
                         var intended = ActionDictionary.Instance.GetActionName(opener[i]);
                         var actual = ActionDictionary.Instance.GetActionName(used[i]);
-                        Plugin.ChatGui.Print(new XivChatEntry
+                        OpenerCreator.ChatGui.Print(new XivChatEntry
                         {
                             Message = $"Difference found at action number {i + 1}: Should use {intended}, used {actual}",
                             Type = XivChatType.Echo
