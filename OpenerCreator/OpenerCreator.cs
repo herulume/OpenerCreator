@@ -12,6 +12,8 @@ namespace OpenerCreator
         private readonly string command = "/ocrt";
         public Configuration Configuration { get; init; }
         private Gui.OpenerCreatorWindow OpenerCreatorGui { get; init; }
+        private Gui.OpenerLoaderWindow OpenerLoaderGui { get; init; }
+
 
         private OnUsedActionHook Hook { get; init; }
 
@@ -31,6 +33,7 @@ namespace OpenerCreator
             this.Configuration.Initialize(PluginInterface);
 
             OpenerCreatorGui = new Gui.OpenerCreatorWindow();
+            OpenerLoaderGui = new Gui.OpenerLoaderWindow();
 
             PluginInterface.UiBuilder.Draw += Draw;
 
@@ -39,6 +42,7 @@ namespace OpenerCreator
             {
                 HelpMessage = @" create|run
 'create' to create your opener.
+'load' to load saved openers.
 'run' to record your actions and run them against your opener, if defined."
             });
         }
@@ -54,6 +58,7 @@ namespace OpenerCreator
         private void Draw()
         {
             OpenerCreatorGui.Draw();
+            OpenerLoaderGui.Draw();
         }
 
         private void CommandParser(string command, string args)
@@ -65,6 +70,9 @@ namespace OpenerCreator
             {
                 case "create":
                     OnCreateCommand();
+                    break;
+                case "load":
+                    OnLoadCommand();
                     break;
                 case "run":
                     OnRunCommand();
@@ -89,6 +97,11 @@ namespace OpenerCreator
         private void OnCreateCommand()
         {
             OpenerCreatorGui.Enabled = true;
+        }
+
+        private void OnLoadCommand()
+        {
+            OpenerLoaderGui.Enabled = true;
         }
     }
 }

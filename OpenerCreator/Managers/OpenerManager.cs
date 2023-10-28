@@ -40,6 +40,12 @@ namespace OpenerCreator.Managers
 
         public void AddOpener(string name, List<uint> actions) => openers[name] = new List<uint>(actions);
 
+        public List<string> GetDefaultNames() => defaultOpeners.Keys.ToList();
+
+        public List<uint> GetDefaultOpener(string name) => new List<uint>(defaultOpeners[name]);
+        public List<string> GetNames() => openers.Keys.ToList();
+
+
         public static void Compare(List<uint> opener, List<uint> used)
         {
             used = used.Take(opener.Count).ToList();

@@ -3,33 +3,26 @@ using System.Collections.Generic;
 using System.Numerics;
 using Dalamud.Game.Text;
 using Dalamud.Interface.Internal;
-using Dalamud.Utility;
 using ImGuiNET;
 using OpenerCreator.Helpers;
 using OpenerCreator.Managers;
 
 namespace OpenerCreator.Gui;
 
-public class OpenerCreatorWindow : IDisposable
+public class OpenerLoaderWindow : IDisposable
 {
     public bool Enabled;
     private List<uint> actions;
 
-    private Dictionary<uint, IDalamudTextureWrap> iconCache;
-    private string search;
-    private string name;
-    private List<uint> filteredActions;
+    private readonly Dictionary<uint, IDalamudTextureWrap> iconCache;
 
     private const int IconSize = 32;
 
-    public OpenerCreatorWindow()
+    public OpenerLoaderWindow()
     {
         Enabled = false;
         actions = new();
         iconCache = new();
-        search = "";
-        name = "";
-        filteredActions = ActionDictionary.Instance.NonRepeatedIdList();
     }
 
     public void Dispose()
@@ -46,7 +39,7 @@ public class OpenerCreatorWindow : IDisposable
             return;
 
         ImGui.SetNextWindowSizeConstraints(new Vector2(100, 100), new Vector2(4000, 2000));
-        ImGui.Begin("Opener Creator", ref Enabled);
+        ImGui.Begin("Opener Loader", ref Enabled);
 
         var spacing = ImGui.GetStyle().ItemSpacing;
         var padding = ImGui.GetStyle().FramePadding;
@@ -77,51 +70,26 @@ public class OpenerCreatorWindow : IDisposable
         ImGui.Dummy(Vector2.Zero);
         ImGui.EndChildFrame();
 
-        // ability filter
-        ImGui.BeginChild("allactions");
-        if (ImGui.InputText("Search", ref search, 64))
+        ImGui.BeginChild("loadopener");
+        if (ImGui.Button("Clear"))
         {
-            if (search.Length > 0)
-                filteredActions = ActionDictionary.Instance.GetNonRepeatedActionsByName(search);
-            else
-                filteredActions = ActionDictionary.Instance.NonRepeatedIdList();
+            actions.Clear();
         }
-
-        ImGui.Text($"{filteredActions.Count} Results");
-        ImGui.SameLine();
-        if (ImGui.Button("Lock opener"))
+        var defaultOpeners = OpenerManager.Instance.GetDefaultNames();
+        foreach (var opener in defaultOpeners)
         {
-            OpenerManager.Instance.Loaded = actions;
-            OpenerCreator.ChatGui.Print(new XivChatEntry
-            {
-                Message = "Opener locked.",
-                Type = XivChatType.Echo
-            });
-        }
-        ImGui.SameLine();
-        if (ImGui.Button("Save") && !name.IsNullOrEmpty())
-        {
-            OpenerManager.Instance.AddOpener(name, actions);
-            OpenerManager.Instance.SaveOpeners();
-            OpenerCreator.ChatGui.Print(new XivChatEntry
-            {
-                Message = "Opener saved.",
-                Type = XivChatType.Echo
-            });
-        }
-        ImGui.SameLine();
-        ImGui.InputText("Opener name", ref name, 32);
-
-
-        for (var i = 0; i < Math.Min(20, filteredActions.Count); i++) // at max 5
-        {
-            var action = ActionDictionary.Instance.GetAction(filteredActions[i]);
-            ImGui.Image(GetIcon(filteredActions[i]), new Vector2(IconSize, IconSize));
-            if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
-                actions.Add(filteredActions[i]);
-
+            ImGui.Text(opener);
             ImGui.SameLine();
-            ImGui.Text(action.Name.ToString());
+            if (ImGui.Button($"Load##{opener}"))
+            {
+                actions = OpenerManager.Instance.GetDefaultOpener(opener);
+                OpenerManager.Instance.Loaded = actions;
+                OpenerCreator.ChatGui.Print(new XivChatEntry
+                {
+                    Message = "Opener locked.",
+                    Type = XivChatType.Echo
+                });
+            }
         }
 
         ImGui.EndChild();
