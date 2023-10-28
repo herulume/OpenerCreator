@@ -27,4 +27,12 @@
       <Private>false</Private>
     </Reference>
   </ItemGroup>
+
+  
+  <ItemGroup>
+    <Content Include="..\Openers\openers.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </Content>
+  </ItemGroup>
 </Project>

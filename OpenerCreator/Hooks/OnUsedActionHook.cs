@@ -49,7 +49,7 @@ namespace OpenerCreator.Hooks
         {
             this.usedActionHook?.Enable();
             this.isActive = true;
-            this.nactions = OpenerManager.Instance.GetOpener("live").Count;
+            this.nactions = OpenerManager.Instance.Loaded.Count;
             OpenerCreator.ChatGui.Print(new XivChatEntry
             {
                 Message = "Recording actions.",
@@ -69,7 +69,7 @@ namespace OpenerCreator.Hooks
                 Type = XivChatType.Echo
             });
 
-            var opener = OpenerManager.Instance.GetOpener("live");
+            var opener = OpenerManager.Instance.Loaded;
             if (opener.Count > 0)
             {
                 var used = items.Select(x => x.Item2).ToList();

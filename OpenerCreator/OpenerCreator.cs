@@ -11,7 +11,7 @@ namespace OpenerCreator
         public string Name => "OpenerCreator";
         private readonly string command = "/ocrt";
         public Configuration Configuration { get; init; }
-        private Gui.OpenerCreator OpenerCreatorGui { get; init; }
+        private Gui.OpenerCreatorWindow OpenerCreatorGui { get; init; }
 
         private OnUsedActionHook Hook { get; init; }
 
@@ -30,7 +30,7 @@ namespace OpenerCreator
             this.Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             this.Configuration.Initialize(PluginInterface);
 
-            OpenerCreatorGui = new Gui.OpenerCreator();
+            OpenerCreatorGui = new Gui.OpenerCreatorWindow();
 
             PluginInterface.UiBuilder.Draw += Draw;
 

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
 using Dalamud.Game.Text;
 using OpenerCreator.Helpers;
 
@@ -10,12 +12,13 @@ namespace OpenerCreator.Managers
     {
         private static OpenerManager? instance;
         private static readonly object LockObject = new();
-        private readonly Dictionary<string, List<uint>> openerDictionary;
+        public List<uint> Loaded { get; set; } = new List<uint>();
+        private readonly Dictionary<string, List<uint>> openers;
+        private readonly string openersFile = Path.Combine(OpenerCreator.PluginInterface.AssemblyLocation.Directory!.FullName, "openers.json");
 
         private OpenerManager()
         {
-            // TODO: load commmon openers from a file
-            openerDictionary = new Dictionary<string, List<uint>>();
+            this.openers = LoadOpeners();
         }
 
         public static OpenerManager Instance
@@ -33,19 +36,7 @@ namespace OpenerCreator.Managers
             }
         }
 
-        public List<uint> GetOpener(string name)
-        {
-            if (openerDictionary.TryGetValue(name, out var opener))
-            {
-                return opener;
-            }
-            return new List<uint>();
-        }
-
-        public void AddOrUpdate(string name, List<uint> opener)
-        {
-            openerDictionary[name] = opener;
-        }
+        public void AddOpener(string name, List<uint> actions) => openers[name] = new List<uint>(actions);
 
         public static void Compare(List<uint> opener, List<uint> used)
         {
@@ -69,7 +60,7 @@ namespace OpenerCreator.Managers
                         var actual = ActionDictionary.Instance.GetActionName(used[i]);
                         OpenerCreator.ChatGui.Print(new XivChatEntry
                         {
-                            Message = $"Difference in action {i + 1}: Substituted {actual} for {intended}",
+                            Message = $"Difference in action {i + 1}: Substituted {intended} for {actual}",
                             Type = XivChatType.Echo
                         });
                     }
@@ -85,5 +76,33 @@ namespace OpenerCreator.Managers
             Message = "Great job! Opener executed perfectly.",
             Type = XivChatType.Echo
         });
+
+        private Dictionary<string, List<uint>> LoadOpeners()
+        {
+            try
+            {
+                var jsonData = File.ReadAllText(openersFile);
+                return JsonSerializer.Deserialize<Dictionary<string, List<uint>>>(jsonData)!;
+            }
+            catch (Exception e)
+            {
+                OpenerCreator.PluginLog.Error("Failed to load Openers", e);
+                return new Dictionary<string, List<uint>>();
+            }
+        }
+
+        public void SaveOpeners()
+        {
+            try
+            {
+                var jsonData = JsonSerializer.Serialize(openers);
+                File.WriteAllText(openersFile, jsonData);
+            }
+            catch (Exception e)
+            {
+                OpenerCreator.PluginLog.Error("Failed to save Openers", e);
+
+            }
+        }
     }
 }

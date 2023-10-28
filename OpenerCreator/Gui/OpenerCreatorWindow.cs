@@ -9,23 +9,25 @@ using OpenerCreator.Managers;
 
 namespace OpenerCreator.Gui;
 
-public class OpenerCreator : IDisposable
+public class OpenerCreatorWindow : IDisposable
 {
     public bool Enabled;
     public List<uint> Actions;
 
     private Dictionary<uint, IDalamudTextureWrap> iconCache;
     private string search;
+    private string name;
     private List<uint> filteredActions;
 
-    const int iconSize = 32;
+    private const int IconSize = 32;
 
-    public OpenerCreator()
+    public OpenerCreatorWindow()
     {
         Enabled = false;
         Actions = new();
         iconCache = new();
         search = "";
+        name = "";
         filteredActions = ActionDictionary.Instance.NonRepeatedIdList();
     }
 
@@ -33,6 +35,8 @@ public class OpenerCreator : IDisposable
     {
         foreach (var v in iconCache)
             v.Value.Dispose();
+        GC.SuppressFinalize(this);
+
     }
 
     public void Draw()
@@ -45,9 +49,9 @@ public class OpenerCreator : IDisposable
 
         var spacing = ImGui.GetStyle().ItemSpacing;
         var padding = ImGui.GetStyle().FramePadding;
-        var icons_per_line = (int)Math.Floor((ImGui.GetContentRegionAvail().X - padding.X * 2.0 + spacing.X) / (iconSize + spacing.X));
+        var icons_per_line = (int)Math.Floor((ImGui.GetContentRegionAvail().X - padding.X * 2.0 + spacing.X) / (IconSize + spacing.X));
         var lines = (float)Math.Max(Math.Ceiling(Actions.Count / (float)icons_per_line), 1);
-        ImGui.BeginChildFrame(2426787, new Vector2(ImGui.GetContentRegionAvail().X, lines * (iconSize + spacing.Y) - spacing.Y + padding.Y * 2), ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        ImGui.BeginChildFrame(2426787, new Vector2(ImGui.GetContentRegionAvail().X, lines * (IconSize + spacing.Y) - spacing.Y + padding.Y * 2), ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
 
         int? delete = null;
         for (var i = 0; i < Actions.Count; i++)
@@ -55,11 +59,11 @@ public class OpenerCreator : IDisposable
             if (i > 0)
             {
                 ImGui.SameLine();
-                if (ImGui.GetContentRegionAvail().X < iconSize)
+                if (ImGui.GetContentRegionAvail().X < IconSize)
                     ImGui.NewLine();
             }
 
-            ImGui.Image(GetIcon(Actions[i]), new Vector2(iconSize, iconSize));
+            ImGui.Image(GetIcon(Actions[i]), new Vector2(IconSize, IconSize));
             if (ImGui.IsItemHovered())
                 ImGui.SetTooltip(ActionDictionary.Instance.GetActionName(Actions[i]));
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
@@ -84,20 +88,34 @@ public class OpenerCreator : IDisposable
 
         ImGui.Text($"{filteredActions.Count} Results");
         ImGui.SameLine();
+        if (ImGui.Button("Lock opener"))
+        {
+            OpenerManager.Instance.Loaded = Actions;
+            OpenerCreator.ChatGui.Print(new XivChatEntry
+            {
+                Message = "Opener locked.",
+                Type = XivChatType.Echo
+            });
+        }
+        ImGui.SameLine();
         if (ImGui.Button("Save opener"))
         {
-            OpenerManager.Instance.AddOrUpdate("live", Actions);
-            global::OpenerCreator.OpenerCreator.ChatGui.Print(new XivChatEntry
+            OpenerManager.Instance.AddOpener(name, Actions);
+            OpenerManager.Instance.SaveOpeners();
+            OpenerCreator.ChatGui.Print(new XivChatEntry
             {
                 Message = "Opener saved.",
                 Type = XivChatType.Echo
             });
         }
+        ImGui.SameLine();
+        ImGui.InputText("Opener name", ref name, 32);
+
 
         for (var i = 0; i < Math.Min(5, filteredActions.Count); i++) // at max 5
         {
             var action = ActionDictionary.Instance.GetAction(filteredActions[i]);
-            ImGui.Image(GetIcon(filteredActions[i]), new Vector2(iconSize, iconSize));
+            ImGui.Image(GetIcon(filteredActions[i]), new Vector2(IconSize, IconSize));
             if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
                 Actions.Add(filteredActions[i]);
 
