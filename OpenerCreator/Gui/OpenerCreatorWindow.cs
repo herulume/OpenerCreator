@@ -82,14 +82,8 @@ public class OpenerCreatorWindow : IDisposable
                     ImGui.NewLine();
             }
 
-            uint color = 0xFF4040FF; // assign to this (abgr)
-            var pos = ImGui.GetCursorScreenPos();
-            var drawlist = ImGui.GetForegroundDrawList();
-            drawlist.PushTextureID(GetIcon(actions[i]));
-            drawlist.PrimReserve(6, 4);
-            drawlist.PrimRectUV(pos, new Vector2(pos.X + IconSize, pos.Y + IconSize), Vector2.Zero, Vector2.One, color);
-            drawlist.PopTextureID();
-            ImGui.Dummy(new Vector2(IconSize, IconSize));
+            var color = new Vector4(255, 0, 0, 255); // assign to this (abgr)
+            ImGui.Image(GetIcon(actions[i]), new Vector2(IconSize, IconSize), Vector2.Zero, Vector2.One, color);
 
             if (ImGui.IsItemHovered())
                 ImGui.SetTooltip(ActionDictionary.Instance.GetActionName(actions[i]));
