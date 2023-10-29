@@ -41,9 +41,13 @@ namespace OpenerCreator.Managers
 
         public List<string> GetDefaultNames() => defaultOpeners.Keys.ToList();
 
-        public List<uint> GetDefaultOpener(string name) => new List<uint>(defaultOpeners[name]);
+        public List<uint> GetDefaultOpener(string name) => new(defaultOpeners[name]);
+
+        public List<uint> GetOpener(string name) => new(openers[name]);
 
         public List<string> GetNames() => openers.Keys.ToList();
+
+        public void DeleteOpener(string name) => openers.Remove(name);
 
         // TODO: Clean
         public static void Compare(List<uint> opener, List<uint> used)

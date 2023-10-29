@@ -17,17 +17,23 @@ public class OpenerCreatorWindow : IDisposable
     private Dictionary<uint, IDalamudTextureWrap> iconCache;
     private string search;
     private string name;
+    private int countdown;
     private List<uint> filteredActions;
+    private List<string> openers;
+    private Action<int> onRunCommand;
 
     private const int IconSize = 32;
 
-    public OpenerCreatorWindow()
+    public OpenerCreatorWindow(Action<int> a)
     {
         Enabled = false;
         actions = new();
         iconCache = new();
         search = "";
         name = "";
+        countdown = 7;
+        openers = new();
+        onRunCommand = a;
         filteredActions = ActionDictionary.Instance.NonRepeatedIdList();
     }
 
@@ -52,6 +58,7 @@ public class OpenerCreatorWindow : IDisposable
         ImGui.BeginTabBar("OpenerCreatorMainTabBar");
         DrawOpenerLoader();
         DrawAbilityFilter();
+        DrawRecordActions();
         ImGui.EndTabBar();
         ImGui.Spacing();
         ImGui.End();
@@ -95,11 +102,15 @@ public class OpenerCreatorWindow : IDisposable
             return;
 
         ImGui.BeginChild("loadopener");
-        if (ImGui.Button("Clear"))
+        DrawClear();
+        ImGui.SameLine();
+        if (ImGui.Button("Refresh"))
         {
-            actions.Clear();
+            openers = OpenerManager.Instance.GetNames();
         }
+
         var defaultOpeners = OpenerManager.Instance.GetDefaultNames();
+        openers = OpenerManager.Instance.GetNames();
         foreach (var opener in defaultOpeners)
         {
             ImGui.Text(opener);
@@ -108,9 +119,27 @@ public class OpenerCreatorWindow : IDisposable
             {
                 actions = OpenerManager.Instance.GetDefaultOpener(opener);
                 OpenerManager.Instance.Loaded = actions;
-                ChatMessages.OpenerLoaded();
             }
         }
+
+        foreach (var opener in openers)
+        {
+            ImGui.Text(opener);
+            ImGui.SameLine();
+            if (ImGui.Button($"Load##{opener}"))
+            {
+                actions = OpenerManager.Instance.GetOpener(opener);
+                OpenerManager.Instance.Loaded = actions;
+            }
+            ImGui.SameLine();
+            if (ImGui.Button($"Delete##{opener}"))
+            {
+                OpenerManager.Instance.DeleteOpener(opener);
+                OpenerManager.Instance.SaveOpeners();
+
+            }
+        }
+
         ImGui.EndChild();
         ImGui.EndTabItem();
     }
@@ -131,11 +160,7 @@ public class OpenerCreatorWindow : IDisposable
 
         ImGui.Text($"{filteredActions.Count} Results");
         ImGui.SameLine();
-        if (ImGui.Button("Lock opener"))
-        {
-            OpenerManager.Instance.Loaded = actions;
-            ChatMessages.OpenerLoaded();
-        }
+        DrawClear();
         ImGui.SameLine();
         if (ImGui.Button("Save") && !name.IsNullOrEmpty())
         {
@@ -152,7 +177,10 @@ public class OpenerCreatorWindow : IDisposable
             var action = ActionDictionary.Instance.GetAction(filteredActions[i]);
             ImGui.Image(GetIcon(filteredActions[i]), new Vector2(IconSize, IconSize));
             if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
+            {
                 actions.Add(filteredActions[i]);
+                OpenerManager.Instance.Loaded = actions;
+            }
 
             ImGui.SameLine();
             ImGui.Text(action.Name.ToString());
@@ -162,6 +190,31 @@ public class OpenerCreatorWindow : IDisposable
         ImGui.EndTabItem();
     }
 
+    private void DrawRecordActions()
+    {
+        if (!ImGui.BeginTabItem("Record Actions"))
+            return;
+        ImGui.BeginChild("recordactions");
+        ImGui.Text("Start a countdown, record your actions and compare them with your opener.");
+        ImGui.InputInt("Countdown timer", ref countdown);
+        if (ImGui.Button("Start Countdown"))
+        {
+            if (countdown < 5 || countdown > 30)
+                countdown = 5;
+            onRunCommand(countdown);
+        }
+
+        ImGui.EndChild();
+        ImGui.EndTabItem();
+    }
+
+    private void DrawClear()
+    {
+        if (ImGui.Button("Clear"))
+        {
+            actions.Clear();
+        }
+    }
     private nint GetIcon(uint id)
     {
         if (!iconCache.ContainsKey(id))

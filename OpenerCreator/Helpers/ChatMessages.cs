@@ -5,12 +5,6 @@ namespace OpenerCreator.Helpers
 {
     internal sealed class ChatMessages
     {
-        public static void OpenerLoaded() => OpenerCreator.ChatGui.Print(new XivChatEntry
-        {
-            Message = "Opener loaded.",
-            Type = XivChatType.Echo
-        });
-
         public static void OpenerSaved() => OpenerCreator.ChatGui.Print(new XivChatEntry
         {
             Message = "Opener saved.",

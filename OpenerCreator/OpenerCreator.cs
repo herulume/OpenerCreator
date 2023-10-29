@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using Dalamud.Game.Command;
 using Dalamud.IoC;
 using Dalamud.Plugin;
@@ -34,7 +32,7 @@ namespace OpenerCreator
             this.Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             this.Configuration.Initialize(PluginInterface);
 
-            OpenerCreatorGui = new Gui.OpenerCreatorWindow();
+            OpenerCreatorGui = new Gui.OpenerCreatorWindow(OnRunCommand);
 
             PluginInterface.UiBuilder.Draw += Draw;
             PluginInterface.UiBuilder.OpenConfigUi += () => OpenerCreatorGui.Enabled = true;
@@ -67,7 +65,7 @@ namespace OpenerCreator
             if (sargs.Length < 1 || sargs.Length > 2) { return; }
 
             var cd = 7;
-            if (sargs.Length == 2 && int.TryParse(sargs[1], out cd) && !Enumerable.Range(5, 30).Contains(cd)) { /* ugly */}
+            if (sargs.Length == 2 && int.TryParse(sargs[1], out cd) && (cd < 5 || cd > 30)) { /* ugly */}
 
             switch (sargs[0])
             {
