@@ -41,6 +41,7 @@ namespace OpenerCreator.Hooks
 
         public void Dispose()
         {
+            this.usedActionHook?.Disable();
             this.usedActionHook?.Dispose();
             GC.SuppressFinalize(this);
         }
