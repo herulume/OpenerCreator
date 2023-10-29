@@ -46,6 +46,7 @@ namespace OpenerCreator.Managers
         public List<string> GetNames() => openers.Keys.ToList();
 
 
+        // TODO: Clean
         public static void Compare(List<uint> opener, List<uint> used)
         {
             used = used.Take(opener.Count).ToList();
@@ -58,11 +59,14 @@ namespace OpenerCreator.Managers
             }
             else
             {
+                var size = Math.Min(opener.Count, used.Count);
+                var shift = 0;
                 // Identify differences
-                for (var i = 0; i < Math.Min(opener.Count, used.Count); i++)
+                for (var i = 0; i + shift < size; i++)
                 {
-                    var intended = ActionDictionary.Instance.GetActionName(opener[i]);
-                    if (opener[i] != used[i] && !ActionDictionary.Instance.SameActions(intended, used[i]))
+                    var openerIndex = i + shift;
+                    var intended = ActionDictionary.Instance.GetActionName(opener[openerIndex]);
+                    if (opener[openerIndex] != used[i] && !ActionDictionary.Instance.SameActions(intended, used[i]))
                     {
                         error = true;
                         var actual = ActionDictionary.Instance.GetActionName(used[i]);
@@ -71,11 +75,23 @@ namespace OpenerCreator.Managers
                             Message = $"Difference in action {i + 1}: Substituted {intended} for {actual}",
                             Type = XivChatType.Echo
                         });
+
+                        var nextIntended = ActionDictionary.Instance.GetActionName(opener[openerIndex]);
+                        if (openerIndex + 1 < size && (opener[openerIndex + 1] == used[i] || ActionDictionary.Instance.SameActions(nextIntended, used[i])))
+                            shift++;
                     }
                 }
                 if (!error)
                 {
                     SuccessMessage();
+                }
+                if (shift != 0)
+                {
+                    OpenerCreator.ChatGui.Print(new XivChatEntry
+                    {
+                        Message = $"You shifted your opener by {shift} actions.",
+                        Type = XivChatType.Echo
+                    });
                 }
             }
         }
