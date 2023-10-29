@@ -47,36 +47,16 @@ public class OpenerCreatorWindow : IDisposable
         ImGui.SetNextWindowSizeConstraints(new Vector2(100, 100), new Vector2(4000, 2000));
         ImGui.Begin("Opener Creator", ref Enabled);
 
-        var spacing = ImGui.GetStyle().ItemSpacing;
-        var padding = ImGui.GetStyle().FramePadding;
-        var icons_per_line = (int)Math.Floor((ImGui.GetContentRegionAvail().X - padding.X * 2.0 + spacing.X) / (IconSize + spacing.X));
-        var lines = (float)Math.Max(Math.Ceiling(actions.Count / (float)icons_per_line), 1);
-        ImGui.BeginChildFrame(2426787, new Vector2(ImGui.GetContentRegionAvail().X, lines * (IconSize + spacing.Y) - spacing.Y + padding.Y * 2), ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        ActionSlideChildFrame.DrawActionsGui(actions, iconCache, IconSize);
 
-        int? delete = null;
-        for (var i = 0; i < actions.Count; i++)
-        {
-            if (i > 0)
-            {
-                ImGui.SameLine();
-                if (ImGui.GetContentRegionAvail().X < IconSize)
-                    ImGui.NewLine();
-            }
+        // draw opener loader
+        // OpenerLoaderChild.DrawOpenerLoader(actions);
 
-            ImGui.Image(GetIcon(actions[i]), new Vector2(IconSize, IconSize));
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip(ActionDictionary.Instance.GetActionName(actions[i]));
-            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-                delete = i;
-        }
+        DrawAbilityFilter();
+    }
 
-        if (delete != null)
-            actions.RemoveAt(delete.Value);
-
-        ImGui.Dummy(Vector2.Zero);
-        ImGui.EndChildFrame();
-
-        // ability filter
+    private void DrawAbilityFilter()
+    {
         ImGui.BeginChild("allactions");
         if (ImGui.InputText("Search", ref search, 64))
         {
@@ -116,29 +96,13 @@ public class OpenerCreatorWindow : IDisposable
         }
 
         ImGui.EndChild();
-
         ImGui.End();
     }
 
     private nint GetIcon(uint id)
     {
         if (!iconCache.ContainsKey(id))
-        {
-            var icon = ActionDictionary.Instance.GetActionIcon(id).ToString("D6");
-            var path = $"ui/icon/{icon[0]}{icon[1]}{icon[2]}000/{icon}_hr1.tex";
-            // Dalamud.Logging.PluginLog.Log(path);
-            var data = OpenerCreator.DataManager.GetFile<Lumina.Data.Files.TexFile>(path)!;
-            var pixels = new byte[data.Header.Width * data.Header.Height * 4];
-            for (var i = 0; i < data.Header.Width * data.Header.Height; i++)
-            {
-                pixels[i * 4 + 0] = data.ImageData[i * 4 + 2];
-                pixels[i * 4 + 1] = data.ImageData[i * 4 + 1];
-                pixels[i * 4 + 2] = data.ImageData[i * 4 + 0];
-                pixels[i * 4 + 3] = data.ImageData[i * 4 + 3];
-            }
-            iconCache[id] = OpenerCreator.PluginInterface.UiBuilder.LoadImageRaw(pixels, data.Header.Width, data.Header.Height, 4);
-        }
-
+            iconCache[id] = ActionDictionary.Instance.GetIconTexture(id);
         return iconCache[id].ImGuiHandle;
     }
 }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Dalamud.Interface.Internal;
 using LuminaAction = Lumina.Excel.GeneratedSheets.Action;
 
 
@@ -56,5 +57,22 @@ namespace OpenerCreator.Helpers
                         && !a.IsPvP
                         && a.ClassJobLevel > 0 // not an old action
                         && a.ClassJobCategory.Row != 0; // not an old action
+
+        public IDalamudTextureWrap GetIconTexture(uint id)
+        {
+            var icon = ActionDictionary.Instance.GetActionIcon(id).ToString("D6");
+            var path = $"ui/icon/{icon[0]}{icon[1]}{icon[2]}000/{icon}_hr1.tex";
+            // Dalamud.Logging.PluginLog.Log(path);
+            var data = OpenerCreator.DataManager.GetFile<Lumina.Data.Files.TexFile>(path)!;
+            var pixels = new byte[data.Header.Width * data.Header.Height * 4];
+            for (var i = 0; i < data.Header.Width * data.Header.Height; i++)
+            {
+                pixels[i * 4 + 0] = data.ImageData[i * 4 + 2];
+                pixels[i * 4 + 1] = data.ImageData[i * 4 + 1];
+                pixels[i * 4 + 2] = data.ImageData[i * 4 + 0];
+                pixels[i * 4 + 3] = data.ImageData[i * 4 + 3];
+            }
+            return OpenerCreator.PluginInterface.UiBuilder.LoadImageRaw(pixels, data.Header.Width, data.Header.Height, 4);
+        }
     }
 }
