@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using Dalamud.Game.Text;
 using Dalamud.Interface.Internal;
 using ImGuiNET;
 using OpenerCreator.Helpers;
@@ -84,11 +83,7 @@ public class OpenerLoaderWindow : IDisposable
             {
                 actions = OpenerManager.Instance.GetDefaultOpener(opener);
                 OpenerManager.Instance.Loaded = actions;
-                OpenerCreator.ChatGui.Print(new XivChatEntry
-                {
-                    Message = "Opener locked.",
-                    Type = XivChatType.Echo
-                });
+                ChatMessages.OpenerLoaded();
             }
         }
 

@@ -52,8 +52,8 @@ namespace OpenerCreator
 
         public void Dispose()
         {
-
             CommandManager.RemoveHandler(command);
+            this.CdHook.Dispose();
             this.OnUsedHook.Dispose();
             OpenerCreatorGui.Dispose();
         }

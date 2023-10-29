@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using Dalamud.Game.Text;
 using OpenerCreator.Helpers;
 
 namespace OpenerCreator.Managers
@@ -43,8 +42,8 @@ namespace OpenerCreator.Managers
         public List<string> GetDefaultNames() => defaultOpeners.Keys.ToList();
 
         public List<uint> GetDefaultOpener(string name) => new List<uint>(defaultOpeners[name]);
-        public List<string> GetNames() => openers.Keys.ToList();
 
+        public List<string> GetNames() => openers.Keys.ToList();
 
         // TODO: Clean
         public static void Compare(List<uint> opener, List<uint> used)
@@ -54,7 +53,7 @@ namespace OpenerCreator.Managers
 
             if (opener.SequenceEqual(used))
             {
-                SuccessMessage();
+                ChatMessages.SuccessExec();
                 return;
             }
             else
@@ -70,36 +69,24 @@ namespace OpenerCreator.Managers
                     {
                         error = true;
                         var actual = ActionDictionary.Instance.GetActionName(used[i]);
-                        OpenerCreator.ChatGui.Print(new XivChatEntry
-                        {
-                            Message = $"Difference in action {i + 1}: Substituted {intended} for {actual}",
-                            Type = XivChatType.Echo
-                        });
-
+                        ChatMessages.ActionDiff(i, intended, actual);
                         var nextIntended = ActionDictionary.Instance.GetActionName(opener[openerIndex]);
                         if (openerIndex + 1 < size && (opener[openerIndex + 1] == used[i] || ActionDictionary.Instance.SameActions(nextIntended, used[i])))
                             shift++;
                     }
                 }
+
                 if (!error)
                 {
-                    SuccessMessage();
+                    ChatMessages.SuccessExec();
                 }
+
                 if (shift != 0)
                 {
-                    OpenerCreator.ChatGui.Print(new XivChatEntry
-                    {
-                        Message = $"You shifted your opener by {shift} actions.",
-                        Type = XivChatType.Echo
-                    });
+                    ChatMessages.OpenerShift(shift);
                 }
             }
         }
-        private static void SuccessMessage() => OpenerCreator.ChatGui.Print(new XivChatEntry
-        {
-            Message = "Great job! Opener executed perfectly.",
-            Type = XivChatType.Echo
-        });
 
         private Dictionary<string, List<uint>> LoadOpeners(string path)
         {
@@ -125,7 +112,6 @@ namespace OpenerCreator.Managers
             catch (Exception e)
             {
                 OpenerCreator.PluginLog.Error("Failed to save Openers", e);
-
             }
         }
     }

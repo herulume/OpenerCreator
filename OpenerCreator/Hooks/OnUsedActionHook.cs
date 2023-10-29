@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using Dalamud.Game.Text;
 using Dalamud.Hooking;
 using Lumina.Excel;
 using OpenerCreator.Helpers;
@@ -30,7 +29,7 @@ namespace OpenerCreator.Hooks
             sheet = OpenerCreator.DataManager.GetExcelSheet<LuminaAction>();
 
             // credits to Tischel for the sig
-            // https://github.com/Tischel/ActionTimeline/blob/master/ActionTimeline/Helpers/TimelineManager.cs#L87
+            // https://github.com/Tischel/ActionTimeline/blob/master/ActionTimeline/Helpers/TimelineManager.cs
             this.usedActionHook = OpenerCreator.GameInteropProvider.HookFromSignature<UsedActionDelegate>(
                 "40 55 53 57 41 54 41 55 41 56 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 70",
                 this.DetourUsedAction
@@ -51,11 +50,7 @@ namespace OpenerCreator.Hooks
             this.usedActionHook?.Enable();
             this.isActive = true;
             this.nactions = OpenerManager.Instance.Loaded.Count;
-            OpenerCreator.ChatGui.Print(new XivChatEntry
-            {
-                Message = "Recording actions.",
-                Type = XivChatType.Echo
-            });
+            ChatMessages.RecordingActions();
         }
 
         public void Disable()
@@ -64,11 +59,7 @@ namespace OpenerCreator.Hooks
             this.isActive = false;
             this.nactions = 0;
 
-            OpenerCreator.ChatGui.Print(new XivChatEntry
-            {
-                Message = $"Actions used: {string.Join(" => ", items.Select(x => x.Item1))}",
-                Type = XivChatType.Echo
-            });
+            ChatMessages.ActionsUsed(items.Select(x => x.Item1));
 
             var opener = OpenerManager.Instance.Loaded;
             if (opener.Count > 0)
@@ -78,11 +69,7 @@ namespace OpenerCreator.Hooks
             }
             else
             {
-                OpenerCreator.ChatGui.Print(new XivChatEntry
-                {
-                    Message = "No opener to compare to.",
-                    Type = XivChatType.Echo
-                });
+                ChatMessages.NoOpener();
             }
             items.Clear();
         }

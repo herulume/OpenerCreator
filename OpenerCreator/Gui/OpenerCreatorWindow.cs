@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using Dalamud.Game.Text;
 using Dalamud.Interface.Internal;
 using Dalamud.Utility;
 using ImGuiNET;
@@ -92,22 +91,14 @@ public class OpenerCreatorWindow : IDisposable
         if (ImGui.Button("Lock opener"))
         {
             OpenerManager.Instance.Loaded = actions;
-            OpenerCreator.ChatGui.Print(new XivChatEntry
-            {
-                Message = "Opener locked.",
-                Type = XivChatType.Echo
-            });
+            ChatMessages.OpenerLoaded();
         }
         ImGui.SameLine();
         if (ImGui.Button("Save") && !name.IsNullOrEmpty())
         {
             OpenerManager.Instance.AddOpener(name, actions);
             OpenerManager.Instance.SaveOpeners();
-            OpenerCreator.ChatGui.Print(new XivChatEntry
-            {
-                Message = "Opener saved.",
-                Type = XivChatType.Echo
-            });
+            ChatMessages.OpenerSaved();
         }
         ImGui.SameLine();
         ImGui.InputText("Opener name", ref name, 32);
