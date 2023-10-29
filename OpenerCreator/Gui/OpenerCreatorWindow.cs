@@ -83,7 +83,10 @@ public class OpenerCreatorWindow : IDisposable
             }
 
             var color = new Vector4(255, 0, 0, 255); // assign to this (abgr)
-            ImGui.Image(GetIcon(actions[i]), new Vector2(IconSize, IconSize), Vector2.Zero, Vector2.One, color);
+            if (i % 2 == 0)
+                ImGui.Image(GetIcon(actions[i]), new Vector2(IconSize, IconSize), Vector2.Zero, Vector2.One, color);
+            else
+                ImGui.Image(GetIcon(actions[i]), new Vector2(IconSize, IconSize));
 
             if (ImGui.IsItemHovered())
                 ImGui.SetTooltip(ActionDictionary.Instance.GetActionName(actions[i]));
@@ -105,11 +108,6 @@ public class OpenerCreatorWindow : IDisposable
 
         ImGui.BeginChild("loadopener");
         DrawClear();
-        ImGui.SameLine();
-        if (ImGui.Button("Refresh"))
-        {
-            openers = OpenerManager.Instance.GetNames();
-        }
 
         var defaultOpeners = OpenerManager.Instance.GetDefaultNames();
         openers = OpenerManager.Instance.GetNames();
@@ -199,7 +197,8 @@ public class OpenerCreatorWindow : IDisposable
         ImGui.BeginChild("recordactions");
         ImGui.Text("Start a countdown, record your actions and compare them with your opener.");
         ImGui.InputInt("Countdown timer", ref countdown);
-        if (ImGui.Button("Start Countdown"))
+
+        if (ImGui.Button("Start Recording"))
         {
             if (countdown < 5 || countdown > 30)
                 countdown = 5;

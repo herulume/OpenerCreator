@@ -18,13 +18,13 @@ namespace OpenerCreator.Hooks
 
         private readonly ExcelSheet<LuminaAction>? sheet;
 
-        private bool isActive;
         private int nactions;
-
         private static readonly int MaxItemCount = 50;
         private readonly List<Tuple<string, uint>> items = new(MaxItemCount);
 
-        public OnUsedActionHook()
+        private CountdownChatHook CdHook { get; init; }
+
+        public OnUsedActionHook(CountdownChatHook cdHook)
         {
             sheet = OpenerCreator.DataManager.GetExcelSheet<LuminaAction>();
 
@@ -34,29 +34,39 @@ namespace OpenerCreator.Hooks
                 "40 55 53 57 41 54 41 55 41 56 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 70",
                 this.DetourUsedAction
                 );
-            this.isActive = false;
             this.nactions = 0;
+            CdHook = cdHook;
         }
 
         public void Dispose()
         {
+            this.CdHook?.Dispose();
             this.usedActionHook?.Disable();
             this.usedActionHook?.Dispose();
             GC.SuppressFinalize(this);
         }
 
-        public void Enable()
+        public void Toggle(int cd)
+        {
+            if (this.usedActionHook!.IsEnabled)
+                Disable();
+            else
+            {
+                CdHook.StartCountdown(cd);
+                Enable();
+            }
+        }
+
+        private void Enable()
         {
             this.usedActionHook?.Enable();
-            this.isActive = true;
             this.nactions = OpenerManager.Instance.Loaded.Count;
             ChatMessages.RecordingActions();
         }
 
-        public void Disable()
+        private void Disable()
         {
             this.usedActionHook?.Disable();
-            this.isActive = false;
             this.nactions = 0;
 
             ChatMessages.ActionsUsed(items.Select(x => x.Item1));
@@ -73,8 +83,6 @@ namespace OpenerCreator.Hooks
             }
             items.Clear();
         }
-
-        public bool IsActive() => this.isActive;
 
         private void DetourUsedAction(uint sourceId, IntPtr sourceCharacter, IntPtr pos, IntPtr effectHeader, IntPtr effectArray, IntPtr effectTrail)
         {
