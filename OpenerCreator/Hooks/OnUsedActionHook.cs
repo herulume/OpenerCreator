@@ -46,14 +46,15 @@ namespace OpenerCreator.Hooks
             GC.SuppressFinalize(this);
         }
 
-        public void Toggle(int cd)
+        public List<string> Toggle(int cd)
         {
             if (this.usedActionHook!.IsEnabled)
-                Disable();
+                return Disable();
             else
             {
                 CdHook.StartCountdown(cd);
                 Enable();
+                return new List<string>();
             }
         }
 
@@ -64,8 +65,9 @@ namespace OpenerCreator.Hooks
             ChatMessages.RecordingActions();
         }
 
-        private void Disable()
+        private List<String> Disable()
         {
+            var feedback = new List<String>();
             this.usedActionHook?.Disable();
             this.nactions = 0;
 
@@ -75,13 +77,14 @@ namespace OpenerCreator.Hooks
             if (opener.Count > 0)
             {
                 var used = items.Select(x => x.Item2).ToList();
-                OpenerManager.Compare(opener, used);
+                feedback = OpenerManager.Compare(opener, used);
             }
             else
             {
-                ChatMessages.NoOpener();
+                feedback.Add(ChatMessages.NoOpener);
             }
             items.Clear();
+            return feedback;
         }
 
         private void DetourUsedAction(uint sourceId, IntPtr sourceCharacter, IntPtr pos, IntPtr effectHeader, IntPtr effectArray, IntPtr effectTrail)

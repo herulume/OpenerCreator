@@ -23,28 +23,12 @@ namespace OpenerCreator.Helpers
             Type = XivChatType.Echo
         });
 
-        public static void NoOpener() => OpenerCreator.ChatGui.Print(new XivChatEntry
-        {
-            Message = "No opener to compare to.",
-            Type = XivChatType.Echo
-        });
+        public static string NoOpener = "No opener to compare to.";
 
-        public static void ActionDiff(int i, string? intended, string? actual) => OpenerCreator.ChatGui.Print(new XivChatEntry
-        {
-            Message = $"Difference in action {i + 1}: Substituted {intended} for {actual}",
-            Type = XivChatType.Echo
-        });
+        public static string ActionDiff(int i, string? intended, string? actual) => $"Difference in action {i + 1}: Substituted {intended} for {actual}";
 
-        public static void SuccessExec() => OpenerCreator.ChatGui.Print(new XivChatEntry
-        {
-            Message = "Great job! Opener executed perfectly.",
-            Type = XivChatType.Echo
-        });
+        public static string SuccessExec() => "Great job! Opener executed perfectly.";
 
-        public static void OpenerShift(int shift) => OpenerCreator.ChatGui.Print(new XivChatEntry
-        {
-            Message = $"You shifted your opener by {shift} actions.",
-            Type = XivChatType.Echo
-        });
+        public static string OpenerShift(int shift) => $"You shifted your opener by {shift} actions.";
     }
 }

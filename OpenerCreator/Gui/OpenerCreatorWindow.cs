@@ -20,11 +20,12 @@ public class OpenerCreatorWindow : IDisposable
     private int countdown;
     private List<uint> filteredActions;
     private List<string> openers;
-    private Action<int> onRunCommand;
+    private List<string> feedback;
+    private readonly Func<int, List<string>> onRunCommand;
 
     private const int IconSize = 32;
 
-    public OpenerCreatorWindow(Action<int> a)
+    public OpenerCreatorWindow(Func<int, List<string>> a)
     {
         Enabled = false;
         actions = new();
@@ -33,6 +34,7 @@ public class OpenerCreatorWindow : IDisposable
         name = "";
         countdown = 7;
         openers = new();
+        feedback = new();
         onRunCommand = a;
         filteredActions = ActionDictionary.Instance.NonRepeatedIdList();
     }
@@ -172,7 +174,7 @@ public class OpenerCreatorWindow : IDisposable
         ImGui.InputText("Opener name", ref name, 32);
 
 
-        for (var i = 0; i < Math.Min(20, filteredActions.Count); i++) // at max 5
+        for (var i = 0; i < Math.Min(20, filteredActions.Count); i++)
         {
             var action = ActionDictionary.Instance.GetAction(filteredActions[i]);
             ImGui.Image(GetIcon(filteredActions[i]), new Vector2(IconSize, IconSize));
@@ -202,7 +204,11 @@ public class OpenerCreatorWindow : IDisposable
         {
             if (countdown < 5 || countdown > 30)
                 countdown = 5;
-            onRunCommand(countdown);
+            feedback = onRunCommand(countdown);
+            foreach (var lineFeedback in feedback)
+            {
+                ImGui.Text(lineFeedback);
+            }
         }
 
         ImGui.EndChild();

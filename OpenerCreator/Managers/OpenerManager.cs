@@ -50,15 +50,16 @@ namespace OpenerCreator.Managers
         public void DeleteOpener(string name) => openers.Remove(name);
 
         // TODO: Clean
-        public static void Compare(List<uint> opener, List<uint> used)
+        public static List<String> Compare(List<uint> opener, List<uint> used)
         {
+            var feedback = new List<string>();
             used = used.Take(opener.Count).ToList();
             var error = false;
 
             if (opener.SequenceEqual(used))
             {
-                ChatMessages.SuccessExec();
-                return;
+                feedback.Add(ChatMessages.SuccessExec());
+                return feedback;
             }
             else
             {
@@ -73,7 +74,7 @@ namespace OpenerCreator.Managers
                     {
                         error = true;
                         var actual = ActionDictionary.Instance.GetActionName(used[i]);
-                        ChatMessages.ActionDiff(i, intended, actual);
+                        feedback.Add(ChatMessages.ActionDiff(i, intended, actual));
                         var nextIntended = ActionDictionary.Instance.GetActionName(opener[openerIndex]);
                         if (openerIndex + 1 < size && (opener[openerIndex + 1] == used[i] || ActionDictionary.Instance.SameActions(nextIntended, used[i])))
                             shift++;
@@ -82,14 +83,15 @@ namespace OpenerCreator.Managers
 
                 if (!error)
                 {
-                    ChatMessages.SuccessExec();
+                    feedback.Add(ChatMessages.SuccessExec());
                 }
 
                 if (shift != 0)
                 {
-                    ChatMessages.OpenerShift(shift);
+                    feedback.Add(ChatMessages.OpenerShift(shift));
                 }
             }
+            return feedback;
         }
 
         private Dictionary<string, List<uint>> LoadOpeners(string path)
