@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
+using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Hooking;
 using Lumina.Excel;
 using OpenerCreator.Helpers;
@@ -20,7 +20,8 @@ namespace OpenerCreator.Hooks
 
         private int nactions;
         private static readonly int MaxItemCount = 50;
-        private readonly List<Tuple<string, uint>> items = new(MaxItemCount);
+        private readonly List<uint> used = new(MaxItemCount);
+        private Action<List<string>> provideFeedback;
 
         private CountdownChatHook CdHook { get; init; }
 
@@ -36,6 +37,7 @@ namespace OpenerCreator.Hooks
                 );
             this.nactions = 0;
             CdHook = cdHook;
+            this.provideFeedback = (_) => { };
         }
 
         public void Dispose()
@@ -46,51 +48,43 @@ namespace OpenerCreator.Hooks
             GC.SuppressFinalize(this);
         }
 
-        public List<string> Toggle(int cd)
+        public void StartRecording(int cd, Action<List<string>> provideFeedback)
         {
             if (this.usedActionHook!.IsEnabled)
-                return Disable();
-            else
-            {
+                return;
+            this.provideFeedback = provideFeedback;
+            if (!OpenerCreator.ClientState.LocalPlayer!.StatusFlags.Equals(StatusFlags.InCombat))
                 CdHook.StartCountdown(cd);
-                Enable();
-                return new List<string>();
-            }
-        }
 
-        private void Enable()
-        {
             this.usedActionHook?.Enable();
             this.nactions = OpenerManager.Instance.Loaded.Count;
-            ChatMessages.RecordingActions();
         }
 
-        private List<String> Disable()
+        private void Disable()
         {
-            var feedback = new List<String>();
+            if (!this.usedActionHook!.IsEnabled)
+                return;
+
             this.usedActionHook?.Disable();
             this.nactions = 0;
-
-            ChatMessages.ActionsUsed(items.Select(x => x.Item1));
-
-            var opener = OpenerManager.Instance.Loaded;
-            if (opener.Count > 0)
-            {
-                var used = items.Select(x => x.Item2).ToList();
-                feedback = OpenerManager.Compare(opener, used);
-            }
-            else
-            {
-                feedback.Add(ChatMessages.NoOpener);
-            }
-            items.Clear();
-            return feedback;
+            OpenerManager.Instance.Compare(used, provideFeedback);
+            used.Clear();
         }
 
         private void DetourUsedAction(uint sourceId, IntPtr sourceCharacter, IntPtr pos, IntPtr effectHeader, IntPtr effectArray, IntPtr effectTrail)
         {
             this.usedActionHook?.Original(sourceId, sourceCharacter, pos, effectHeader, effectArray, effectTrail);
 
+            if (nactions == 0)
+            {
+                var message = new List<string>
+                {
+                    "No opener definied.",
+                    "Stopped recording."
+                };
+                provideFeedback(message);
+                return;
+            }
 
             var player = OpenerCreator.ClientState.LocalPlayer;
             if (player == null || sourceId != player.ObjectId) { return; }
@@ -99,9 +93,9 @@ namespace OpenerCreator.Hooks
             var action = sheet!.GetRow(actionId);
             if (action != null && ActionDictionary.IsPvEAction(action))
             {
-                items.Add(Tuple.Create(action.Name.ToString(), actionId));
+                used.Add(actionId);
                 nactions--;
-                if (this.nactions == 0)
+                if (this.nactions <= 0)
                 {
                     this.Disable();
                     return;

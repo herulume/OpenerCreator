@@ -18,14 +18,15 @@ public class OpenerCreatorWindow : IDisposable
     private string search;
     private string name;
     private int countdown;
+    private bool recording;
     private List<uint> filteredActions;
     private List<string> openers;
     private List<string> feedback;
-    private readonly Func<int, List<string>> onRunCommand;
+    private readonly Action<int, Action<List<string>>> onRunCommand;
 
     private const int IconSize = 32;
 
-    public OpenerCreatorWindow(Func<int, List<string>> a)
+    public OpenerCreatorWindow(Action<int, Action<List<string>>> a)
     {
         Enabled = false;
         actions = new();
@@ -36,6 +37,7 @@ public class OpenerCreatorWindow : IDisposable
         openers = new();
         feedback = new();
         onRunCommand = a;
+        recording = false;
         filteredActions = ActionDictionary.Instance.NonRepeatedIdList();
     }
 
@@ -168,7 +170,6 @@ public class OpenerCreatorWindow : IDisposable
         {
             OpenerManager.Instance.AddOpener(name, actions);
             OpenerManager.Instance.SaveOpeners();
-            ChatMessages.OpenerSaved();
         }
         ImGui.SameLine();
         ImGui.InputText("Opener name", ref name, 32);
@@ -204,23 +205,35 @@ public class OpenerCreatorWindow : IDisposable
         {
             if (countdown < 5 || countdown > 30)
                 countdown = 5;
-            feedback = onRunCommand(countdown);
-            foreach (var lineFeedback in feedback)
-            {
-                ImGui.Text(lineFeedback);
-            }
+            this.feedback.Clear();
+            this.recording = true;
+            onRunCommand(countdown, AddFeedback);
+        }
+        if (recording)
+        {
+            ImGui.SameLine();
+            ImGui.Text("RECORDING");
+        }
+
+        foreach (var line in feedback)
+        {
+            ImGui.Text(line);
         }
 
         ImGui.EndChild();
         ImGui.EndTabItem();
     }
-
     private void DrawClear()
     {
         if (ImGui.Button("Clear"))
         {
             actions.Clear();
         }
+    }
+    public void AddFeedback(List<string> feedback)
+    {
+        this.recording = false;
+        this.feedback = feedback;
     }
     private nint GetIcon(uint id)
     {

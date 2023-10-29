@@ -50,48 +50,49 @@ namespace OpenerCreator.Managers
         public void DeleteOpener(string name) => openers.Remove(name);
 
         // TODO: Clean
-        public static List<String> Compare(List<uint> opener, List<uint> used)
+        public void Compare(List<uint> used, Action<List<string>> provideFeedback)
         {
             var feedback = new List<string>();
-            used = used.Take(opener.Count).ToList();
+            used = used.Take(Loaded.Count).ToList();
             var error = false;
 
-            if (opener.SequenceEqual(used))
+            if (Loaded.SequenceEqual(used))
             {
-                feedback.Add(ChatMessages.SuccessExec());
-                return feedback;
+                feedback.Add(Messages.SuccessExec());
+                provideFeedback(feedback);
+                return;
             }
             else
             {
-                var size = Math.Min(opener.Count, used.Count);
+                var size = Math.Min(Loaded.Count, used.Count);
                 var shift = 0;
                 // Identify differences
                 for (var i = 0; i + shift < size; i++)
                 {
                     var openerIndex = i + shift;
-                    var intended = ActionDictionary.Instance.GetActionName(opener[openerIndex]);
-                    if (opener[openerIndex] != used[i] && !ActionDictionary.Instance.SameActions(intended, used[i]))
+                    var intended = ActionDictionary.Instance.GetActionName(Loaded[openerIndex]);
+                    if (Loaded[openerIndex] != used[i] && !ActionDictionary.Instance.SameActions(intended, used[i]))
                     {
                         error = true;
                         var actual = ActionDictionary.Instance.GetActionName(used[i]);
-                        feedback.Add(ChatMessages.ActionDiff(i, intended, actual));
-                        var nextIntended = ActionDictionary.Instance.GetActionName(opener[openerIndex]);
-                        if (openerIndex + 1 < size && (opener[openerIndex + 1] == used[i] || ActionDictionary.Instance.SameActions(nextIntended, used[i])))
+                        feedback.Add(Messages.ActionDiff(i, intended, actual));
+                        var nextIntended = ActionDictionary.Instance.GetActionName(Loaded[openerIndex]);
+                        if (openerIndex + 1 < size && (Loaded[openerIndex + 1] == used[i] || ActionDictionary.Instance.SameActions(nextIntended, used[i])))
                             shift++;
                     }
                 }
 
                 if (!error)
                 {
-                    feedback.Add(ChatMessages.SuccessExec());
+                    feedback.Add(Messages.SuccessExec());
                 }
 
                 if (shift != 0)
                 {
-                    feedback.Add(ChatMessages.OpenerShift(shift));
+                    feedback.Add(Messages.OpenerShift(shift));
                 }
             }
-            return feedback;
+            provideFeedback(feedback);
         }
 
         private Dictionary<string, List<uint>> LoadOpeners(string path)

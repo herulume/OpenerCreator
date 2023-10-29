@@ -2,6 +2,7 @@ using Dalamud.Game.Command;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using OpenerCreator.Gui;
 using OpenerCreator.Hooks;
 
 namespace OpenerCreator
@@ -30,7 +31,7 @@ namespace OpenerCreator
             this.Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             this.Configuration.Initialize(PluginInterface);
 
-            OpenerCreatorGui = new Gui.OpenerCreatorWindow(this.OnUsedHook.Toggle);
+            OpenerCreatorGui = new OpenerCreatorWindow(this.OnUsedHook.StartRecording);
 
             PluginInterface.UiBuilder.Draw += OpenerCreatorGui.Draw;
             PluginInterface.UiBuilder.OpenConfigUi += () => OpenerCreatorGui.Enabled = true;
