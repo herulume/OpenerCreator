@@ -92,9 +92,11 @@ namespace OpenerCreator
         {
             if (this.OnUsedHook.IsActive())
                 this.OnUsedHook.Disable();
-
-            this.CdHook.StartCountdown(cd);
-            this.OnUsedHook.Enable();
+            else
+            {
+                this.CdHook.StartCountdown(cd);
+                this.OnUsedHook.Enable();
+            }
         }
 
         private void OnCreateCommand()
