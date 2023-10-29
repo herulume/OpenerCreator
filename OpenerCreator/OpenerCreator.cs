@@ -37,13 +37,13 @@ namespace OpenerCreator
             OpenerCreatorGui = new Gui.OpenerCreatorWindow();
 
             PluginInterface.UiBuilder.Draw += Draw;
+            PluginInterface.UiBuilder.OpenConfigUi += () => OpenerCreatorGui.Enabled = true;
 
 
             CommandManager.AddHandler(command, new CommandInfo(CommandParser)
             {
-                HelpMessage = @" create|load|run
-'create' to create your opener.
-'load' to load saved openers.
+                HelpMessage = @" config|run
+'config' to create or load your opener.
 'run' to record your actions and run them against your opener, if defined."
             });
         }
