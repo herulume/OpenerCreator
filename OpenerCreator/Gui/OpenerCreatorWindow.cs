@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
 using Dalamud.Interface.Internal;
 using Dalamud.Utility;
@@ -7,38 +8,58 @@ using ImGuiNET;
 using OpenerCreator.Helpers;
 using OpenerCreator.Managers;
 
+// TODO: perhabs use custom countdown icons to have finer control and allow accurate countdown above 5
+
 namespace OpenerCreator.Gui;
 
 public class OpenerCreatorWindow : IDisposable
 {
     public bool Enabled;
-    private List<uint> actions;
 
-    private Dictionary<uint, IDalamudTextureWrap> iconCache;
-    private string search;
     private string name;
+    private string search;
     private int countdown;
+    private Stopwatch? countdownStart;
     private bool recording;
-    private List<uint> filteredActions;
     private List<string> openers;
     private List<string> feedback;
+
+    private List<uint> actions;
+    private List<uint> filteredActions;
+
     private readonly Action<int, Action<List<string>>> onRunCommand;
+    private Dictionary<uint, IDalamudTextureWrap> iconCache;
+    private IDalamudTextureWrap countdownNumbers;
+    private IDalamudTextureWrap countdownGo;
 
     private const int IconSize = 32;
+    private static Vector2 countdownNumberSize = new(240, 320);
 
     public OpenerCreatorWindow(Action<int, Action<List<string>>> a)
     {
         Enabled = false;
-        actions = new();
-        iconCache = new();
-        search = "";
+
         name = "";
+        search = "";
         countdown = 7;
+        recording = false;
         openers = new();
         feedback = new();
-        onRunCommand = a;
-        recording = false;
+
+        actions = new();
         filteredActions = ActionDictionary.Instance.NonRepeatedIdList();
+
+        onRunCommand = a;
+        iconCache = new();
+        countdownNumbers = ActionDictionary.Instance.GetTexture("ui/uld/ScreenInfo_CountDown_hr1.tex");
+        var languageCode = OpenerCreator.DataManager.Language switch
+        {
+            Dalamud.ClientLanguage.French => "fr",
+            Dalamud.ClientLanguage.German => "de",
+            Dalamud.ClientLanguage.Japanese => "ja",
+            _ => "en"
+        };
+        countdownGo = ActionDictionary.Instance.GetTexture($"ui/icon/121000/{languageCode}/121841_hr1.tex");
     }
 
     public void Dispose()
@@ -66,6 +87,8 @@ public class OpenerCreatorWindow : IDisposable
         ImGui.EndTabBar();
         ImGui.Spacing();
         ImGui.End();
+        
+        DrawCountdown();
     }
 
     public void DrawActionsGui()
@@ -199,14 +222,14 @@ public class OpenerCreatorWindow : IDisposable
             return;
         ImGui.BeginChild("recordactions");
         ImGui.Text("Start a countdown, record your actions and compare them with your opener.");
-        ImGui.InputInt("Countdown timer", ref countdown);
+        if (ImGui.InputInt("Countdown timer", ref countdown))
+            countdown = Math.Clamp(countdown, 0, 30);
 
         if (ImGui.Button("Start Recording"))
         {
-            if (countdown < 5 || countdown > 30)
-                countdown = 5;
             this.feedback.Clear();
             this.recording = true;
+            this.countdownStart = Stopwatch.StartNew();
             onRunCommand(countdown, AddFeedback);
         }
         if (recording)
@@ -223,6 +246,45 @@ public class OpenerCreatorWindow : IDisposable
         ImGui.EndChild();
         ImGui.EndTabItem();
     }
+
+    private void DrawCountdown()
+    {
+        if (countdownStart == null)
+            return;
+
+        var drawlist = ImGui.GetForegroundDrawList();
+        var timer = countdown - countdownStart.ElapsedMilliseconds / 1000.0f;
+        var ceil = (float)Math.Ceiling(timer);
+        var uspacing = 1.0f / 6.0f;
+
+        if (timer <= 0)
+            ceil = 0;
+        if (timer > 5)
+            ceil = (int)Math.Ceiling(timer / 5.0) * 5.0f;
+
+        var anim = 1.0f - Math.Clamp((ceil - timer) - 0.5f, 0.0f, 1.0f);
+        var color = 0x00FFFFFF + ((uint)(anim * 255) << 24);
+
+        if (timer < -2)
+        {
+            countdownStart = null;
+            return;
+        }
+
+        var center = ImGui.GetIO().DisplaySize / 2;
+        if (timer <= 0)
+            drawlist.AddImage(countdownGo.ImGuiHandle, center - countdownGo.Size / 2, center + countdownGo.Size / 2, Vector2.Zero, Vector2.One, color);
+        else if (timer <= 5)
+            drawlist.AddImage(countdownNumbers.ImGuiHandle, center - countdownNumberSize / 2, center + countdownNumberSize / 2, new(ceil * uspacing, 0.0f), new(ceil * uspacing + uspacing, 1.0f), color);
+        else
+        {
+            var dig1 = (int)Math.Floor(ceil / 10.0f);
+            var dig2 = ceil % 10;
+            drawlist.AddImage(countdownNumbers.ImGuiHandle, center - new Vector2(countdownNumberSize.X, countdownNumberSize.Y / 2), center + new Vector2(0.0f, countdownNumberSize.Y / 2), new(dig1 * uspacing, 0.0f), new(dig1 * uspacing + uspacing, 1.0f), color);
+            drawlist.AddImage(countdownNumbers.ImGuiHandle, center - new Vector2(0.0f, countdownNumberSize.Y / 2), center + new Vector2(countdownNumberSize.X, countdownNumberSize.Y / 2), new(dig2 * uspacing, 0.0f), new(dig2 * uspacing + uspacing, 1.0f), color);
+        }
+    }
+
     private void DrawClear()
     {
         if (ImGui.Button("Clear"))
@@ -230,11 +292,13 @@ public class OpenerCreatorWindow : IDisposable
             actions.Clear();
         }
     }
+
     public void AddFeedback(List<string> feedback)
     {
         this.recording = false;
         this.feedback = feedback;
     }
+
     private nint GetIcon(uint id)
     {
         if (!iconCache.ContainsKey(id))
