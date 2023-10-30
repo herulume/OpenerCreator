@@ -24,6 +24,7 @@ public class OpenerCreatorWindow : IDisposable
     private List<string> openers;
     private List<string> feedback;
 
+    private int? actionDnd;
     private List<uint> actions;
     private List<uint> filteredActions;
     private readonly HashSet<int> wrongActions;
@@ -35,7 +36,7 @@ public class OpenerCreatorWindow : IDisposable
     private IDalamudTextureWrap countdownNumbers;
     private IDalamudTextureWrap countdownGo;
 
-    private const int IconSize = 32;
+    private static Vector2 iconSize = new(32);
     private static Vector2 countdownNumberSize = new(240, 320);
 
     public OpenerCreatorWindow(Action<int, Action<List<string>>, Action<int>> startRecording, Action stopRecording)
@@ -72,6 +73,9 @@ public class OpenerCreatorWindow : IDisposable
     {
         foreach (var v in iconCache)
             v.Value.Dispose();
+        countdownNumbers.Dispose();
+        countdownGo.Dispose();
+        
         GC.SuppressFinalize(this);
 
     }
@@ -101,34 +105,84 @@ public class OpenerCreatorWindow : IDisposable
     {
         var spacing = ImGui.GetStyle().ItemSpacing;
         var padding = ImGui.GetStyle().FramePadding;
-        var icons_per_line = (int)Math.Floor((ImGui.GetContentRegionAvail().X - padding.X * 2.0 + spacing.X) / (IconSize + spacing.X));
-        var lines = (float)Math.Max(Math.Ceiling(actions.Count / (float)icons_per_line), 1);
-        ImGui.BeginChildFrame(2426787, new Vector2(ImGui.GetContentRegionAvail().X, lines * (IconSize + spacing.Y) - spacing.Y + padding.Y * 2), ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        var iconsPerLine = (int)Math.Floor((ImGui.GetContentRegionAvail().X - padding.X * 2.0 + spacing.X) / (iconSize.X + spacing.X));
+        var lines = (float)Math.Max(Math.Ceiling(actions.Count / (float)iconsPerLine), 1);
+        ImGui.BeginChildFrame(2426787, new Vector2(ImGui.GetContentRegionAvail().X, lines * (iconSize.Y + spacing.Y) - spacing.Y + padding.Y * 2), ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+
+        int? dndTarget = null;
+        if (actionDnd != null)
+        {
+            var pos = ImGui.GetMousePos() - ImGui.GetCursorScreenPos();
+            var x = (int)Math.Floor(pos.X / (iconSize.X + spacing.X));
+            var y = (int)Math.Floor(pos.Y / (iconSize.Y + spacing.Y));
+            dndTarget = Math.Clamp(y * iconsPerLine + x, 0, actions.Count - 1);
+        }
 
         int? delete = null;
-        for (var i = 0; i < actions.Count; i++)
+        for (var i = 0; i < actions.Count + (actionDnd == null ? 0 : 1); i++)
         {
             if (i > 0)
             {
                 ImGui.SameLine();
-                if (ImGui.GetContentRegionAvail().X < IconSize)
+                if (ImGui.GetContentRegionAvail().X < iconSize.X)
                     ImGui.NewLine();
             }
 
-            var color = new Vector4(255, 0, 0, 255); // assign to this (abgr)
-            if (this.wrongActions.Contains(i))
-                ImGui.Image(GetIcon(actions[i]), new Vector2(IconSize, IconSize), Vector2.Zero, Vector2.One, color);
-            else
-                ImGui.Image(GetIcon(actions[i]), new Vector2(IconSize, IconSize));
+            if ((dndTarget <= actionDnd && dndTarget == i) || (dndTarget > actionDnd && dndTarget == i - 1))
+            {
+                ImGui.Image(GetIcon(actions[actionDnd!.Value]), iconSize, Vector2.Zero, Vector2.One, new Vector4(255, 255, 255, 100));
+                
+                if (actionDnd != i) {
+                    ImGui.SameLine();
+                    if (ImGui.GetContentRegionAvail().X < iconSize.X)
+                        ImGui.NewLine();
+                }
+            }
+            
+            if (actionDnd != i && i < actions.Count)
+            {
+                var color = this.wrongActions.Contains(i) ? new Vector4(255, 0, 0, 255) : new Vector4(255, 255, 255, 255);
+                ImGui.Image(GetIcon(actions[i]), iconSize, Vector2.Zero, Vector2.One, color);
+                if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
+                    actionDnd = i;
 
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip(ActionDictionary.Instance.GetActionName(actions[i]));
-            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-                delete = i;
+                if (ImGui.IsItemHovered())
+                    ImGui.SetTooltip(ActionDictionary.Instance.GetActionName(actions[i]));
+                if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+                    delete = i;
+            }
         }
 
         if (delete != null)
             actions.RemoveAt(delete.Value);
+
+        // Handle dnd
+        if (actionDnd != null)
+        {
+            var pos = ImGui.GetMousePos();
+            var drawlist = ImGui.GetWindowDrawList();
+            drawlist.PushTextureID(GetIcon(actions[actionDnd.Value]));
+            drawlist.PrimReserve(6, 4);
+            drawlist.PrimRectUV(pos, pos + iconSize, Vector2.Zero, Vector2.One, 0xFFFFFFFF);
+            drawlist.PopTextureID();
+            
+            if (!ImGui.IsMouseDown(ImGuiMouseButton.Left))
+            {
+                if (dndTarget < actionDnd)
+                {
+                    var action = actions[actionDnd.Value];
+                    actions.RemoveAt(actionDnd.Value);
+                    actions.Insert(dndTarget.Value, action);
+                }
+                else if (dndTarget > actionDnd)
+                {
+                    actions.Insert(dndTarget.Value + 1, actions[actionDnd.Value]);
+                    actions.RemoveAt(actionDnd.Value);
+                }
+                
+                actionDnd = null;
+            }
+        }
 
         ImGui.Dummy(Vector2.Zero);
         ImGui.EndChildFrame();
@@ -182,7 +236,7 @@ public class OpenerCreatorWindow : IDisposable
         if (!ImGui.BeginTabItem("Creator"))
             return;
 
-        ImGui.BeginChild("allactions");
+        ImGui.BeginChild("allactions", new Vector2(0, ImGui.GetContentRegionAvail().Y - ImGui.GetStyle().WindowPadding.Y));
         if (ImGui.InputText("Search", ref search, 64))
         {
             if (search.Length > 0)
@@ -207,8 +261,7 @@ public class OpenerCreatorWindow : IDisposable
         for (var i = 0; i < Math.Min(20, filteredActions.Count); i++)
         {
             var action = ActionDictionary.Instance.GetAction(filteredActions[i]);
-            ImGui.Image(GetIcon(filteredActions[i]), new Vector2(IconSize, IconSize));
-            if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
+            if (ImGui.ImageButton(GetIcon(filteredActions[i]), iconSize))
             {
                 actions.Add(filteredActions[i]);
                 OpenerManager.Instance.Loaded = actions;
