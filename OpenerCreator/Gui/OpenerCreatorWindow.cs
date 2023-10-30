@@ -27,7 +27,9 @@ public class OpenerCreatorWindow : IDisposable
     private List<uint> actions;
     private List<uint> filteredActions;
 
-    private readonly Action<int, Action<List<string>>> onRunCommand;
+    private readonly Action<int, Action<List<string>>> startRecording;
+    private readonly Action stopRecording;
+
     private Dictionary<uint, IDalamudTextureWrap> iconCache;
     private IDalamudTextureWrap countdownNumbers;
     private IDalamudTextureWrap countdownGo;
@@ -35,7 +37,7 @@ public class OpenerCreatorWindow : IDisposable
     private const int IconSize = 32;
     private static Vector2 countdownNumberSize = new(240, 320);
 
-    public OpenerCreatorWindow(Action<int, Action<List<string>>> a)
+    public OpenerCreatorWindow(Action<int, Action<List<string>>> startRecording, Action stopRecording)
     {
         Enabled = false;
 
@@ -49,7 +51,9 @@ public class OpenerCreatorWindow : IDisposable
         actions = new();
         filteredActions = ActionDictionary.Instance.NonRepeatedIdList();
 
-        onRunCommand = a;
+        this.startRecording = startRecording;
+        this.stopRecording = stopRecording;
+
         iconCache = new();
         countdownNumbers = ActionDictionary.Instance.GetTexture("ui/uld/ScreenInfo_CountDown_hr1.tex");
         var languageCode = OpenerCreator.DataManager.Language switch
@@ -87,7 +91,7 @@ public class OpenerCreatorWindow : IDisposable
         ImGui.EndTabBar();
         ImGui.Spacing();
         ImGui.End();
-        
+
         DrawCountdown();
     }
 
@@ -230,7 +234,13 @@ public class OpenerCreatorWindow : IDisposable
             this.feedback.Clear();
             this.recording = true;
             this.countdownStart = Stopwatch.StartNew();
-            onRunCommand(countdown, AddFeedback);
+            startRecording(countdown, AddFeedback);
+        }
+        ImGui.SameLine();
+        if (ImGui.Button("Stop Recording"))
+        {
+            this.recording = false;
+            stopRecording();
         }
         if (recording)
         {

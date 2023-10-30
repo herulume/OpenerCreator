@@ -31,7 +31,7 @@ namespace OpenerCreator
             this.Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             this.Configuration.Initialize(PluginInterface);
 
-            OpenerCreatorGui = new OpenerCreatorWindow(this.OnUsedHook.StartRecording);
+            OpenerCreatorGui = new OpenerCreatorWindow(this.OnUsedHook.StartRecording, this.OnUsedHook.StopRecording);
 
             PluginInterface.UiBuilder.Draw += OpenerCreatorGui.Draw;
             PluginInterface.UiBuilder.OpenConfigUi += () => OpenerCreatorGui.Enabled = true;

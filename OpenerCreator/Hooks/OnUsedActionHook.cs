@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Hooking;
 using Lumina.Excel;
 using OpenerCreator.Helpers;
@@ -60,7 +59,23 @@ namespace OpenerCreator.Hooks
             this.nactions = OpenerManager.Instance.Loaded.Count;
         }
 
-        private void Disable()
+        public void StopRecording()
+        {
+            if (!this.usedActionHook!.IsEnabled)
+                return;
+
+            this.usedActionHook?.Disable();
+            this.nactions = 0;
+            used.Clear();
+
+            var message = new List<string>
+                {
+                    Messages.NoOpener
+                };
+            provideFeedback(message);
+        }
+
+        private void Compare()
         {
             if (!this.usedActionHook!.IsEnabled)
                 return;
@@ -75,17 +90,6 @@ namespace OpenerCreator.Hooks
         {
             this.usedActionHook?.Original(sourceId, sourceCharacter, pos, effectHeader, effectArray, effectTrail);
 
-            if (nactions == 0)
-            {
-                var message = new List<string>
-                {
-                    "No opener definied.",
-                    "Stopped recording."
-                };
-                provideFeedback(message);
-                return;
-            }
-
             var player = OpenerCreator.ClientState.LocalPlayer;
             if (player == null || sourceId != player.ObjectId) { return; }
 
@@ -93,11 +97,16 @@ namespace OpenerCreator.Hooks
             var action = sheet!.GetRow(actionId);
             if (action != null && ActionDictionary.IsPvEAction(action))
             {
+                if (nactions == 0)
+                {
+                    StopRecording();
+                    return;
+                }
                 used.Add(actionId);
                 nactions--;
                 if (this.nactions <= 0)
                 {
-                    this.Disable();
+                    this.Compare();
                     return;
                 }
 
