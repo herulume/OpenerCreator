@@ -50,7 +50,7 @@ namespace OpenerCreator.Managers
         public void DeleteOpener(string name) => openers.Remove(name);
 
         // TODO: Clean
-        public void Compare(List<uint> used, Action<List<string>> provideFeedback)
+        public void Compare(List<uint> used, Action<List<string>> provideFeedback, Action<int> wrongAction)
         {
             var feedback = new List<string>();
             used = used.Take(Loaded.Count).ToList();
@@ -76,6 +76,7 @@ namespace OpenerCreator.Managers
                         error = true;
                         var actual = ActionDictionary.Instance.GetActionName(used[i]);
                         feedback.Add(Messages.ActionDiff(i, intended, actual));
+                        wrongAction(openerIndex);
                         var nextIntended = ActionDictionary.Instance.GetActionName(Loaded[openerIndex]);
                         if (openerIndex + 1 < size && (Loaded[openerIndex + 1] == used[i] || ActionDictionary.Instance.SameActions(nextIntended, used[i])))
                             shift++;

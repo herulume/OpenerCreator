@@ -26,8 +26,9 @@ public class OpenerCreatorWindow : IDisposable
 
     private List<uint> actions;
     private List<uint> filteredActions;
+    private readonly HashSet<int> wrongActions;
 
-    private readonly Action<int, Action<List<string>>> startRecording;
+    private readonly Action<int, Action<List<string>>, Action<int>> startRecording;
     private readonly Action stopRecording;
 
     private Dictionary<uint, IDalamudTextureWrap> iconCache;
@@ -37,7 +38,7 @@ public class OpenerCreatorWindow : IDisposable
     private const int IconSize = 32;
     private static Vector2 countdownNumberSize = new(240, 320);
 
-    public OpenerCreatorWindow(Action<int, Action<List<string>>> startRecording, Action stopRecording)
+    public OpenerCreatorWindow(Action<int, Action<List<string>>, Action<int>> startRecording, Action stopRecording)
     {
         Enabled = false;
 
@@ -50,6 +51,7 @@ public class OpenerCreatorWindow : IDisposable
 
         actions = new();
         filteredActions = ActionDictionary.Instance.NonRepeatedIdList();
+        wrongActions = new();
 
         this.startRecording = startRecording;
         this.stopRecording = stopRecording;
@@ -114,7 +116,7 @@ public class OpenerCreatorWindow : IDisposable
             }
 
             var color = new Vector4(255, 0, 0, 255); // assign to this (abgr)
-            if (i % 2 == 0)
+            if (this.wrongActions.Contains(i))
                 ImGui.Image(GetIcon(actions[i]), new Vector2(IconSize, IconSize), Vector2.Zero, Vector2.One, color);
             else
                 ImGui.Image(GetIcon(actions[i]), new Vector2(IconSize, IconSize));
@@ -232,9 +234,10 @@ public class OpenerCreatorWindow : IDisposable
         if (ImGui.Button("Start Recording"))
         {
             this.feedback.Clear();
+            this.wrongActions.Clear();
             this.recording = true;
             this.countdownStart = Stopwatch.StartNew();
-            startRecording(countdown, AddFeedback);
+            startRecording(countdown, AddFeedback, WrongAction);
         }
         ImGui.SameLine();
         if (ImGui.Button("Stop Recording"))
@@ -300,7 +303,14 @@ public class OpenerCreatorWindow : IDisposable
         if (ImGui.Button("Clear"))
         {
             actions.Clear();
+            feedback.Clear();
+            wrongActions.Clear();
         }
+    }
+
+    private void WrongAction(int i)
+    {
+        this.wrongActions.Add(i);
     }
 
     public void AddFeedback(List<string> feedback)

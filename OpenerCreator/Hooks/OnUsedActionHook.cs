@@ -21,6 +21,7 @@ namespace OpenerCreator.Hooks
         private static readonly int MaxItemCount = 50;
         private readonly List<uint> used = new(MaxItemCount);
         private Action<List<string>> provideFeedback;
+        private Action<int> wrongAction;
 
         private CountdownChatHook CdHook { get; init; }
 
@@ -37,6 +38,7 @@ namespace OpenerCreator.Hooks
             this.nactions = 0;
             CdHook = cdHook;
             this.provideFeedback = (_) => { };
+            this.wrongAction = (_) => { };
         }
 
         public void Dispose()
@@ -47,11 +49,12 @@ namespace OpenerCreator.Hooks
             GC.SuppressFinalize(this);
         }
 
-        public void StartRecording(int cd, Action<List<string>> provideFeedback)
+        public void StartRecording(int cd, Action<List<string>> provideFeedback, Action<int> wrongAction)
         {
             if (this.usedActionHook!.IsEnabled)
                 return;
             this.provideFeedback = provideFeedback;
+            this.wrongAction = wrongAction;
             // if (!OpenerCreator.ClientState.LocalPlayer!.StatusFlags.Equals(StatusFlags.InCombat))
             //     CdHook.StartCountdown(cd);
 
@@ -82,7 +85,7 @@ namespace OpenerCreator.Hooks
 
             this.usedActionHook?.Disable();
             this.nactions = 0;
-            OpenerManager.Instance.Compare(used, provideFeedback);
+            OpenerManager.Instance.Compare(used, provideFeedback, wrongAction);
             used.Clear();
         }
 
