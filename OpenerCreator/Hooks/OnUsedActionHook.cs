@@ -98,7 +98,7 @@ namespace OpenerCreator.Hooks
 
             var actionId = (uint)Marshal.ReadInt32(effectHeader, 0x8);
             var action = sheet!.GetRow(actionId);
-            if (action != null && ActionDictionary.IsPvEAction(action))
+            if (action != null && Actions.IsPvEAction(action))
             {
                 if (nactions == 0)
                 {

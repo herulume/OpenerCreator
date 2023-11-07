@@ -70,15 +70,15 @@ namespace OpenerCreator.Managers
                 for (var i = 0; i + shift < size; i++)
                 {
                     var openerIndex = i + shift;
-                    var intended = ActionDictionary.Instance.GetActionName(Loaded[openerIndex]);
-                    if (Loaded[openerIndex] != used[i] && !ActionDictionary.Instance.SameActions(intended, used[i]))
+                    var intended = Actions.Instance.GetActionName(Loaded[openerIndex]);
+                    if (Loaded[openerIndex] != used[i] && !Actions.Instance.SameActions(intended, used[i]))
                     {
                         error = true;
-                        var actual = ActionDictionary.Instance.GetActionName(used[i]);
+                        var actual = Actions.Instance.GetActionName(used[i]);
                         feedback.Add(Messages.ActionDiff(i, intended, actual));
                         wrongAction(openerIndex);
-                        var nextIntended = ActionDictionary.Instance.GetActionName(Loaded[openerIndex]);
-                        if (openerIndex + 1 < size && (Loaded[openerIndex + 1] == used[i] || ActionDictionary.Instance.SameActions(nextIntended, used[i])))
+                        var nextIntended = Actions.Instance.GetActionName(Loaded[openerIndex]);
+                        if (openerIndex + 1 < size && (Loaded[openerIndex + 1] == used[i] || Actions.Instance.SameActions(nextIntended, used[i])))
                             shift++;
                     }
                 }

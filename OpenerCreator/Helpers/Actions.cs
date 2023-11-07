@@ -46,6 +46,7 @@ namespace OpenerCreator.Helpers
         public ushort GetActionIcon(uint id) => actionsSheet[id].Icon;
 
         public List<uint> GetNonRepeatedActionsByName(string name) => nonRepeatedActions
+            .AsParallel()
             .Where(a => a.Name.ToString().ToLower().Contains(name.ToLower()))
             .Select(a => a.RowId)
             .ToList();

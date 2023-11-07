@@ -51,14 +51,14 @@ public class OpenerCreatorWindow : IDisposable
         feedback = new();
 
         actions = new();
-        filteredActions = ActionDictionary.Instance.NonRepeatedIdList();
+        filteredActions = Actions.Instance.NonRepeatedIdList();
         wrongActions = new();
 
         this.startRecording = startRecording;
         this.stopRecording = stopRecording;
 
         iconCache = new();
-        countdownNumbers = ActionDictionary.Instance.GetTexture("ui/uld/ScreenInfo_CountDown_hr1.tex");
+        countdownNumbers = Actions.Instance.GetTexture("ui/uld/ScreenInfo_CountDown_hr1.tex");
         var languageCode = OpenerCreator.DataManager.Language switch
         {
             Dalamud.ClientLanguage.French => "fr",
@@ -66,7 +66,7 @@ public class OpenerCreatorWindow : IDisposable
             Dalamud.ClientLanguage.Japanese => "ja",
             _ => "en"
         };
-        countdownGo = ActionDictionary.Instance.GetTexture($"ui/icon/121000/{languageCode}/121841_hr1.tex");
+        countdownGo = Actions.Instance.GetTexture($"ui/icon/121000/{languageCode}/121841_hr1.tex");
     }
 
     public void Dispose()
@@ -147,7 +147,7 @@ public class OpenerCreatorWindow : IDisposable
                     actionDnd = i;
 
                 if (ImGui.IsItemHovered())
-                    ImGui.SetTooltip(ActionDictionary.Instance.GetActionName(actions[i]));
+                    ImGui.SetTooltip(Actions.Instance.GetActionName(actions[i]));
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                     delete = i;
             }
@@ -240,9 +240,9 @@ public class OpenerCreatorWindow : IDisposable
         if (ImGui.InputText("Search", ref search, 64))
         {
             if (search.Length > 0)
-                filteredActions = ActionDictionary.Instance.GetNonRepeatedActionsByName(search);
+                filteredActions = Actions.Instance.GetNonRepeatedActionsByName(search);
             else
-                filteredActions = ActionDictionary.Instance.NonRepeatedIdList();
+                filteredActions = Actions.Instance.NonRepeatedIdList();
         }
 
         ImGui.Text($"{filteredActions.Count} Results");
@@ -260,7 +260,7 @@ public class OpenerCreatorWindow : IDisposable
 
         for (var i = 0; i < Math.Min(20, filteredActions.Count); i++)
         {
-            var action = ActionDictionary.Instance.GetAction(filteredActions[i]);
+            var action = Actions.Instance.GetAction(filteredActions[i]);
             if (ImGui.ImageButton(GetIcon(filteredActions[i]), iconSize))
             {
                 actions.Add(filteredActions[i]);
@@ -375,7 +375,7 @@ public class OpenerCreatorWindow : IDisposable
     private nint GetIcon(uint id)
     {
         if (!iconCache.ContainsKey(id))
-            iconCache[id] = ActionDictionary.Instance.GetIconTexture(id);
+            iconCache[id] = Actions.Instance.GetIconTexture(id);
         return iconCache[id].ImGuiHandle;
     }
 }
