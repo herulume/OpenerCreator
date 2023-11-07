@@ -54,7 +54,17 @@ namespace OpenerCreator.Managers
 
         public List<Tuple<Jobs, List<string>>> GetNames() => openers.Select(x => Tuple.Create(x.Key, x.Value.Keys.ToList())).ToList();
 
-        public void DeleteOpener(string name, Jobs job) => openers[job].Remove(name);
+        public void DeleteOpener(string name, Jobs job)
+        {
+            if (openers.ContainsKey(job))
+            {
+                openers[job].Remove(name);
+                if (openers[job].Count == 0)
+                {
+                    openers.Remove(job);
+                }
+            }
+        }
 
         // TODO: Clean
         public void Compare(List<uint> used, Action<List<string>> provideFeedback, Action<int> wrongAction)

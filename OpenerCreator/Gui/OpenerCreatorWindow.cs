@@ -27,6 +27,7 @@ public class OpenerCreatorWindow : IDisposable
     private int? actionDnd;
     private List<uint> actions;
     private List<uint> filteredActions;
+    private List<Tuple<Jobs, List<string>>> openers;
     private readonly HashSet<int> wrongActions;
 
     private readonly Action<int, Action<List<string>>, Action<int>> startRecording;
@@ -51,6 +52,7 @@ public class OpenerCreatorWindow : IDisposable
         showDefault = false;
         feedback = new();
         actions = new();
+        openers = OpenerManager.Instance.GetNames();
         filteredActions = Actions.Instance.NonRepeatedIdList();
         wrongActions = new();
 
@@ -198,21 +200,21 @@ public class OpenerCreatorWindow : IDisposable
         DrawClear();
 
         var defaultOpeners = OpenerManager.Instance.GetDefaultNames();
-        var openers = OpenerManager.Instance.GetNames();
+        openers = OpenerManager.Instance.GetNames();
         ImGui.Checkbox("Default Openers", ref showDefault);
         if (showDefault)
         {
             DrawOpeners(defaultOpeners, "Default", OpenerManager.Instance.GetDefaultOpener);
 
         }
-        DrawOpeners(openers, "Saved", OpenerManager.Instance.GetOpener);
+        DrawOpeners(openers, "Saved", OpenerManager.Instance.GetOpener, true);
 
 
         ImGui.EndChild();
         ImGui.EndTabItem();
     }
 
-    private void DrawOpeners(List<Tuple<Jobs, List<string>>> openers, string prefix, Func<string, Jobs, List<uint>> getOpener)
+    private void DrawOpeners(List<Tuple<Jobs, List<string>>> openers, string prefix, Func<string, Jobs, List<uint>> getOpener, bool delete = false)
     {
         foreach (var openerJob in openers)
         {
@@ -228,6 +230,16 @@ public class OpenerCreatorWindow : IDisposable
                         actions = getOpener(opener, openerJob.Item1);
                         actions = OpenerManager.Instance.GetDefaultOpener(opener, openerJob.Item1);
                         OpenerManager.Instance.Loaded = actions;
+                    }
+                    if (delete)
+                    {
+                        ImGui.SameLine();
+                        if (ImGui.Button($"Delete##{prefix}#{opener}"))
+                        {
+                            OpenerManager.Instance.DeleteOpener(opener, openerJob.Item1);
+                            OpenerManager.Instance.SaveOpeners();
+                            openers = OpenerManager.Instance.GetNames();
+                        }
                     }
                 }
             });
