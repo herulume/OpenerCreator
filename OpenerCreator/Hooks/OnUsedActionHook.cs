@@ -100,7 +100,7 @@ namespace OpenerCreator.Hooks
             var action = sheet!.GetRow(actionId);
             if (action != null && Actions.IsPvEAction(action))
             {
-                if (nactions == 0)
+                if (nactions == 0) // opener not defined
                 {
                     StopRecording();
                     return;

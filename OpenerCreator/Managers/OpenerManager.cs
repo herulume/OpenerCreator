@@ -12,8 +12,8 @@ namespace OpenerCreator.Managers
         private static OpenerManager? instance;
         private static readonly object LockObject = new();
         public List<uint> Loaded { get; set; } = new List<uint>();
-        private readonly Dictionary<string, List<uint>> openers;
-        private readonly Dictionary<string, List<uint>> defaultOpeners;
+        private readonly Dictionary<string, Dictionary<string, List<uint>>> openers;
+        private readonly Dictionary<string, Dictionary<string, List<uint>>> defaultOpeners;
         private readonly string openersFile = Path.Combine(OpenerCreator.PluginInterface.ConfigDirectory.FullName, "openers.json");
 
         private OpenerManager()
@@ -37,17 +37,17 @@ namespace OpenerCreator.Managers
             }
         }
 
-        public void AddOpener(string name, List<uint> actions) => openers[name] = new List<uint>(actions);
+        public void AddOpener(string name, List<uint> actions) => openers["Any"][name] = new List<uint>(actions);
 
-        public List<string> GetDefaultNames() => defaultOpeners.Keys.ToList();
+        public List<string> GetDefaultNames() => defaultOpeners["Any"].Keys.ToList();
 
-        public List<uint> GetDefaultOpener(string name) => new(defaultOpeners[name]);
+        public List<uint> GetDefaultOpener(string name) => new(defaultOpeners["Any"][name]);
 
-        public List<uint> GetOpener(string name) => new(openers[name]);
+        public List<uint> GetOpener(string name) => new(openers["Any"][name]);
 
-        public List<string> GetNames() => openers.Keys.ToList();
+        public List<string> GetNames() => openers.Keys.ToList(); // TODO: check if exists, for all tbh lmao
 
-        public void DeleteOpener(string name) => openers.Remove(name);
+        public void DeleteOpener(string name) => openers["Any"].Remove(name);
 
         // TODO: Clean
         public void Compare(List<uint> used, Action<List<string>> provideFeedback, Action<int> wrongAction)
@@ -96,17 +96,17 @@ namespace OpenerCreator.Managers
             provideFeedback(feedback);
         }
 
-        private Dictionary<string, List<uint>> LoadOpeners(string path)
+        private Dictionary<string, Dictionary<string, List<uint>>> LoadOpeners(string path)
         {
             try
             {
                 var jsonData = File.ReadAllText(path);
-                return JsonSerializer.Deserialize<Dictionary<string, List<uint>>>(jsonData)!;
+                return JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, List<uint>>>>(jsonData)!;
             }
             catch (Exception e)
             {
                 OpenerCreator.PluginLog.Error("Failed to load Openers", e);
-                return new Dictionary<string, List<uint>>();
+                return new Dictionary<string, Dictionary<string, List<uint>>>();
             }
         }
 

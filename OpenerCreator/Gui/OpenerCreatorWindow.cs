@@ -18,6 +18,7 @@ public class OpenerCreatorWindow : IDisposable
 
     private string name;
     private string search;
+    private string jobFilter;
     private int countdown;
     private Stopwatch? countdownStart;
     private bool recording;
@@ -45,6 +46,7 @@ public class OpenerCreatorWindow : IDisposable
 
         name = "";
         search = "";
+        jobFilter = "Any";
         countdown = 7;
         recording = false;
         openers = new();
@@ -75,7 +77,7 @@ public class OpenerCreatorWindow : IDisposable
             v.Value.Dispose();
         countdownNumbers.Dispose();
         countdownGo.Dispose();
-        
+
         GC.SuppressFinalize(this);
 
     }
@@ -131,14 +133,15 @@ public class OpenerCreatorWindow : IDisposable
             if ((dndTarget <= actionDnd && dndTarget == i) || (dndTarget > actionDnd && dndTarget == i - 1))
             {
                 ImGui.Image(GetIcon(actions[actionDnd!.Value]), iconSize, Vector2.Zero, Vector2.One, new Vector4(255, 255, 255, 100));
-                
-                if (actionDnd != i) {
+
+                if (actionDnd != i)
+                {
                     ImGui.SameLine();
                     if (ImGui.GetContentRegionAvail().X < iconSize.X)
                         ImGui.NewLine();
                 }
             }
-            
+
             if (actionDnd != i && i < actions.Count)
             {
                 var color = this.wrongActions.Contains(i) ? new Vector4(255, 0, 0, 255) : new Vector4(255, 255, 255, 255);
@@ -165,7 +168,7 @@ public class OpenerCreatorWindow : IDisposable
             drawlist.PrimReserve(6, 4);
             drawlist.PrimRectUV(pos, pos + iconSize, Vector2.Zero, Vector2.One, 0xFFFFFFFF);
             drawlist.PopTextureID();
-            
+
             if (!ImGui.IsMouseDown(ImGuiMouseButton.Left))
             {
                 if (dndTarget < actionDnd)
@@ -179,7 +182,7 @@ public class OpenerCreatorWindow : IDisposable
                     actions.Insert(dndTarget.Value + 1, actions[actionDnd.Value]);
                     actions.RemoveAt(actionDnd.Value);
                 }
-                
+
                 actionDnd = null;
             }
         }
@@ -237,18 +240,9 @@ public class OpenerCreatorWindow : IDisposable
             return;
 
         ImGui.BeginChild("allactions", new Vector2(0, ImGui.GetContentRegionAvail().Y - ImGui.GetStyle().WindowPadding.Y));
-        if (ImGui.InputText("Search", ref search, 64))
-        {
-            if (search.Length > 0)
-                filteredActions = Actions.Instance.GetNonRepeatedActionsByName(search);
-            else
-                filteredActions = Actions.Instance.NonRepeatedIdList();
-        }
 
-        ImGui.Text($"{filteredActions.Count} Results");
-        ImGui.SameLine();
-        DrawClear();
-        ImGui.SameLine();
+
+        // Save opener
         if (ImGui.Button("Save") && !name.IsNullOrEmpty())
         {
             OpenerManager.Instance.AddOpener(name, actions);
@@ -257,6 +251,32 @@ public class OpenerCreatorWindow : IDisposable
         ImGui.SameLine();
         ImGui.InputText("Opener name", ref name, 32);
 
+        //  Filter by job
+        if (ImGui.BeginMenu($"Job Filter: {jobFilter}"))
+        {
+            foreach (var job in Actions.Instance.Jobs)
+            {
+                if (ImGui.MenuItem(job))
+                {
+                    jobFilter = job;
+                    filteredActions = Actions.Instance.GetNonRepeatedActionsByName(search, job);
+                }
+            }
+            ImGui.EndMenu();
+        }
+
+        // Search bar
+        if (ImGui.InputText("Search", ref search, 64))
+        {
+            if (search.Length > 0)
+                filteredActions = Actions.Instance.GetNonRepeatedActionsByName(search, "Any");
+            else
+                filteredActions = Actions.Instance.NonRepeatedIdList();
+        }
+
+        ImGui.Text($"{filteredActions.Count} Results");
+        ImGui.SameLine();
+        DrawClear();
 
         for (var i = 0; i < Math.Min(20, filteredActions.Count); i++)
         {
