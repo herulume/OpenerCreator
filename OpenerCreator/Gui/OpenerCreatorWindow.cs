@@ -18,13 +18,12 @@ public class OpenerCreatorWindow : IDisposable
 
     private string name;
     private string search;
-    private string jobFilter;
+    private Jobs jobFilter;
     private int countdown;
+    private bool showDefault;
     private Stopwatch? countdownStart;
     private bool recording;
-    private List<string> openers;
     private List<string> feedback;
-
     private int? actionDnd;
     private List<uint> actions;
     private List<uint> filteredActions;
@@ -46,12 +45,11 @@ public class OpenerCreatorWindow : IDisposable
 
         name = "";
         search = "";
-        jobFilter = "Any";
+        jobFilter = Jobs.ANY;
         countdown = 7;
         recording = false;
-        openers = new();
+        showDefault = false;
         feedback = new();
-
         actions = new();
         filteredActions = Actions.Instance.NonRepeatedIdList();
         wrongActions = new();
@@ -200,38 +198,40 @@ public class OpenerCreatorWindow : IDisposable
         DrawClear();
 
         var defaultOpeners = OpenerManager.Instance.GetDefaultNames();
-        openers = OpenerManager.Instance.GetNames();
-        foreach (var opener in defaultOpeners)
+        var openers = OpenerManager.Instance.GetNames();
+        ImGui.Checkbox("Default Openers", ref showDefault);
+        if (showDefault)
         {
-            ImGui.Text(opener);
-            ImGui.SameLine();
-            if (ImGui.Button($"Load##{opener}"))
-            {
-                actions = OpenerManager.Instance.GetDefaultOpener(opener);
-                OpenerManager.Instance.Loaded = actions;
-            }
-        }
+            DrawOpeners(defaultOpeners, "Default", OpenerManager.Instance.GetDefaultOpener);
 
-        foreach (var opener in openers)
-        {
-            ImGui.Text(opener);
-            ImGui.SameLine();
-            if (ImGui.Button($"Load##{opener}"))
-            {
-                actions = OpenerManager.Instance.GetOpener(opener);
-                OpenerManager.Instance.Loaded = actions;
-            }
-            ImGui.SameLine();
-            if (ImGui.Button($"Delete##{opener}"))
-            {
-                OpenerManager.Instance.DeleteOpener(opener);
-                OpenerManager.Instance.SaveOpeners();
-
-            }
         }
+        DrawOpeners(openers, "Saved", OpenerManager.Instance.GetOpener);
+
 
         ImGui.EndChild();
         ImGui.EndTabItem();
+    }
+
+    private void DrawOpeners(List<Tuple<Jobs, List<string>>> openers, string prefix, Func<string, Jobs, List<uint>> getOpener)
+    {
+        foreach (var openerJob in openers)
+        {
+            CollapsingHeader($"{prefix} {openerJob.Item1} Openers", () =>
+            {
+                foreach (var opener in openerJob.Item2)
+                {
+
+                    ImGui.Text(opener);
+                    ImGui.SameLine();
+                    if (ImGui.Button($"Load##{prefix}#{opener}"))
+                    {
+                        actions = getOpener(opener, openerJob.Item1);
+                        actions = OpenerManager.Instance.GetDefaultOpener(opener, openerJob.Item1);
+                        OpenerManager.Instance.Loaded = actions;
+                    }
+                }
+            });
+        }
     }
 
     private void DrawAbilityFilter()
@@ -245,31 +245,29 @@ public class OpenerCreatorWindow : IDisposable
         // Save opener
         if (ImGui.Button("Save") && !name.IsNullOrEmpty())
         {
-            OpenerManager.Instance.AddOpener(name, actions);
+            OpenerManager.Instance.AddOpener(name, jobFilter, actions);
             OpenerManager.Instance.SaveOpeners();
         }
         ImGui.SameLine();
         ImGui.InputText("Opener name", ref name, 32);
-
         //  Filter by job
-        if (ImGui.BeginMenu($"Job Filter: {jobFilter}"))
+        if (ImGui.BeginCombo($"Job Filter", jobFilter.ToString()))
         {
-            foreach (var job in Actions.Instance.Jobs)
+            foreach (Jobs job in Enum.GetValues(typeof(Jobs)))
             {
-                if (ImGui.MenuItem(job))
+                if (ImGui.Selectable(job.ToString()))
                 {
                     jobFilter = job;
-                    filteredActions = Actions.Instance.GetNonRepeatedActionsByName(search, job);
+                    filteredActions = Actions.Instance.GetNonRepeatedActionsByName(search, jobFilter);
                 }
             }
-            ImGui.EndMenu();
+            ImGui.EndCombo();
         }
-
         // Search bar
         if (ImGui.InputText("Search", ref search, 64))
         {
             if (search.Length > 0)
-                filteredActions = Actions.Instance.GetNonRepeatedActionsByName(search, "Any");
+                filteredActions = Actions.Instance.GetNonRepeatedActionsByName(search, jobFilter);
             else
                 filteredActions = Actions.Instance.NonRepeatedIdList();
         }
@@ -397,5 +395,13 @@ public class OpenerCreatorWindow : IDisposable
         if (!iconCache.ContainsKey(id))
             iconCache[id] = Actions.Instance.GetIconTexture(id);
         return iconCache[id].ImGuiHandle;
+    }
+
+    private static void CollapsingHeader(string label, Action action)
+    {
+        if (ImGui.CollapsingHeader(label, ImGuiTreeNodeFlags.DefaultOpen))
+        {
+            action();
+        }
     }
 }
