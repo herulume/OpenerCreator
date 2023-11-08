@@ -37,7 +37,7 @@ namespace OpenerCreator.Helpers
             }
         }
 
-        public List<uint> NonRepeatedIdList() => nonRepeatedActions.Select(a => a.RowId).ToList();
+        public List<uint> NonRepeatedIdList() => nonRepeatedActions.Select(a => a.RowId).Where(id => id != 0).ToList();
 
         public string GetActionName(uint id) => actionsSheet[id].Name.ToString();
 
@@ -57,11 +57,12 @@ namespace OpenerCreator.Helpers
 
         public bool SameActions(string name, uint aId) => actionsSheet[aId].Name.ToString().ToLower().Contains(name.ToLower());
 
-        public static bool IsPvEAction(LuminaAction a) => (a.ActionCategory.Row is 2 or 3 or 4) // GCD or Weaponskill or oGCD
-                                                                                                // && a.IsPlayerAction this will remove abilities like Paradox and Mudras and pet actions
-                        && !a.IsPvP
-                        && a.ClassJobLevel > 0 // not an old action
-                        && a.ClassJobCategory.Row != 0; // not an old action
+        public static bool IsPvEAction(LuminaAction a) =>
+            a.RowId == 0 || // 0 is used as an catch-all action
+            ((a.ActionCategory.Row is 2 or 3 or 4) // GCD or Weaponskill or oGCD
+                && !a.IsPvP
+                && a.ClassJobLevel > 0 // not an old action
+                && a.ClassJobCategory.Row != 0); // not an old action
 
         public IDalamudTextureWrap GetTexture(string path)
         {

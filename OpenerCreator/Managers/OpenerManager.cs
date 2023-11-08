@@ -88,7 +88,7 @@ namespace OpenerCreator.Managers
                 {
                     var openerIndex = i + shift;
                     var intended = Actions.Instance.GetActionName(Loaded[openerIndex]);
-                    if (Loaded[openerIndex] != used[i] && !Actions.Instance.SameActions(intended, used[i]))
+                    if (Loaded[openerIndex] != used[i] && !Actions.Instance.SameActions(intended, used[i]) && used[i] != 0)
                     {
                         error = true;
                         var actual = Actions.Instance.GetActionName(used[i]);

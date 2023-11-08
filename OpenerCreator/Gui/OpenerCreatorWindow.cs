@@ -286,6 +286,11 @@ public class OpenerCreatorWindow : IDisposable
         ImGui.Text($"{filteredActions.Count} Results");
         ImGui.SameLine();
         DrawClear();
+        ImGui.SameLine();
+        if (ImGui.Button("Add catch-all action"))
+        {
+            actions.Add(0);
+        }
 
         for (var i = 0; i < Math.Min(20, filteredActions.Count); i++)
         {
