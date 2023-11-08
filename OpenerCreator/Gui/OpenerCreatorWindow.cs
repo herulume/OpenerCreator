@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
+using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Interface.Internal;
 using Dalamud.Utility;
 using ImGuiNET;
@@ -89,9 +90,7 @@ public class OpenerCreatorWindow : IDisposable
 
         ImGui.SetNextWindowSizeConstraints(new Vector2(100, 100), new Vector2(4000, 2000));
         ImGui.Begin("Opener Creator", ref Enabled);
-
         DrawActionsGui();
-
         ImGui.BeginTabBar("OpenerCreatorMainTabBar");
         DrawOpenerLoader();
         DrawAbilityFilter();
@@ -326,6 +325,7 @@ public class OpenerCreatorWindow : IDisposable
         if (ImGui.Button("Stop Recording"))
         {
             this.recording = false;
+            this.countdownStart = null;
             stopRecording();
         }
         if (recording)
@@ -345,7 +345,7 @@ public class OpenerCreatorWindow : IDisposable
 
     private void DrawCountdown()
     {
-        if (countdownStart == null)
+        if (countdownStart == null || OpenerCreator.ClientState.LocalPlayer!.StatusFlags.ToString().Contains(StatusFlags.InCombat.ToString()))
             return;
 
         var drawlist = ImGui.GetForegroundDrawList();
@@ -398,6 +398,7 @@ public class OpenerCreatorWindow : IDisposable
 
     public void AddFeedback(List<string> feedback)
     {
+        this.countdownStart = null;
         this.recording = false;
         this.feedback = feedback;
     }

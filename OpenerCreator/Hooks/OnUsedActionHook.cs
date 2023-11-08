@@ -55,8 +55,8 @@ namespace OpenerCreator.Hooks
                 return;
             this.provideFeedback = provideFeedback;
             this.wrongAction = wrongAction;
-            // if (!OpenerCreator.ClientState.LocalPlayer!.StatusFlags.Equals(StatusFlags.InCombat))
-            //     CdHook.StartCountdown(cd);
+            //if (!OpenerCreator.ClientState.LocalPlayer!.StatusFlags.Equals(StatusFlags.InCombat))
+            //    CdHook.StartCountdown(cd);
 
             this.usedActionHook?.Enable();
             this.nactions = OpenerManager.Instance.Loaded.Count;
