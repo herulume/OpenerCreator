@@ -64,7 +64,7 @@ namespace OpenerCreator.Helpers
                 && a.ClassJobLevel > 0 // not an old action
                 && a.ClassJobCategory.Row != 0); // not an old action
 
-        public IDalamudTextureWrap GetTexture(string path)
+        public static IDalamudTextureWrap GetTexture(string path)
         {
             var data = OpenerCreator.DataManager.GetFile<Lumina.Data.Files.TexFile>(path)!;
             var pixels = new byte[data.Header.Width * data.Header.Height * 4];

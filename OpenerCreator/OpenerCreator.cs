@@ -26,7 +26,7 @@ namespace OpenerCreator
 
         public OpenerCreator()
         {
-            this.OnUsedHook = new OnUsedActionHook(new CountdownChatHook());
+            this.OnUsedHook = new OnUsedActionHook();
 
             this.Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             this.Configuration.Initialize(PluginInterface);

@@ -23,9 +23,7 @@ namespace OpenerCreator.Hooks
         private Action<List<string>> provideFeedback;
         private Action<int> wrongAction;
 
-        private CountdownChatHook CdHook { get; init; }
-
-        public OnUsedActionHook(CountdownChatHook cdHook)
+        public OnUsedActionHook()
         {
             sheet = OpenerCreator.DataManager.GetExcelSheet<LuminaAction>();
 
@@ -36,14 +34,12 @@ namespace OpenerCreator.Hooks
                 this.DetourUsedAction
                 );
             this.nactions = 0;
-            CdHook = cdHook;
             this.provideFeedback = (_) => { };
             this.wrongAction = (_) => { };
         }
 
         public void Dispose()
         {
-            this.CdHook?.Dispose();
             this.usedActionHook?.Disable();
             this.usedActionHook?.Dispose();
             GC.SuppressFinalize(this);
@@ -53,11 +49,9 @@ namespace OpenerCreator.Hooks
         {
             if (this.usedActionHook!.IsEnabled)
                 return;
+
             this.provideFeedback = provideFeedback;
             this.wrongAction = wrongAction;
-            //if (!OpenerCreator.ClientState.LocalPlayer!.StatusFlags.Equals(StatusFlags.InCombat))
-            //    CdHook.StartCountdown(cd);
-
             this.usedActionHook?.Enable();
             this.nactions = OpenerManager.Instance.Loaded.Count;
         }
