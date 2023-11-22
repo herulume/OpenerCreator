@@ -9,15 +9,18 @@ namespace OpenerCreator.Managers
 {
     public class OpenerManager
     {
+        private const uint CatchAllAction = 0;
         private static OpenerManager? SingletonInstance;
         private static readonly object LockObject = new();
+        private readonly Actions actions;
         public List<uint> Loaded { get; set; } = new List<uint>();
         private readonly Dictionary<Jobs, Dictionary<string, List<uint>>> openers;
         private readonly Dictionary<Jobs, Dictionary<string, List<uint>>> defaultOpeners;
         private readonly string openersFile = Path.Combine(OpenerCreator.PluginInterface.ConfigDirectory.FullName, "openers.json");
 
-        private OpenerManager()
+        private OpenerManager(Actions actions)
         {
+            this.actions = actions;
             this.defaultOpeners = LoadOpeners(Path.Combine(OpenerCreator.PluginInterface.AssemblyLocation.Directory!.FullName, "openers.json"));
             this.openers = LoadOpeners(openersFile);
         }
@@ -30,7 +33,7 @@ namespace OpenerCreator.Managers
                 {
                     lock (LockObject)
                     {
-                        SingletonInstance ??= new OpenerManager();
+                        SingletonInstance ??= new OpenerManager(Actions.Instance);
                     }
                 }
                 return SingletonInstance;
@@ -66,14 +69,14 @@ namespace OpenerCreator.Managers
             }
         }
 
-        public void Compare(List<uint> used, Action<List<string>> provideFeedback, Action<int> wrongAction)
+        public void Compare(List<uint> used, Action<Feedback> provideFeedback, Action<int> wrongAction)
         {
-            var feedback = new List<string>();
+            var feedback = new Feedback();
             used = used.Take(Loaded.Count).ToList();
 
             if (Loaded.SequenceEqual(used))
             {
-                feedback.Add(Messages.SuccessExec());
+                feedback.AddMessage(Feedback.MessageType.Feedback, "Great job! Opener executed perfectly.");
                 provideFeedback(feedback);
                 return;
             }
@@ -89,7 +92,7 @@ namespace OpenerCreator.Managers
                 if (HasActionDifference(used, openerIndex, i, out var intended, out var actual))
                 {
                     error = true;
-                    feedback.Add(Messages.ActionDiff(i, intended, Actions.Instance.GetActionName(actual)));
+                    feedback.AddMessage(Feedback.MessageType.Feedback, $"Difference in action {i + 1}: Substituted {intended} for {actions.GetActionName(actual)}");
                     wrongAction(openerIndex);
 
                     if (ShouldShift(openerIndex, size, used[i]))
@@ -101,30 +104,30 @@ namespace OpenerCreator.Managers
 
             if (!error)
             {
-                feedback.Add(Messages.SuccessExec());
+                feedback.AddMessage(Feedback.MessageType.Feedback, "Great job! Opener executed perfectly.");
             }
 
             if (shift != 0)
             {
-                feedback.Add(Messages.OpenerShift(shift));
+                feedback.AddMessage(Feedback.MessageType.Feedback, $"You shifted your opener by {shift} actions.");
             }
 
             provideFeedback(feedback);
         }
         private bool HasActionDifference(List<uint> used, int openerIndex, int usedIndex, out string intended, out uint actual)
         {
-            intended = Actions.Instance.GetActionName(Loaded[openerIndex]);
+            intended = actions.GetActionName(Loaded[openerIndex]);
             actual = used[usedIndex];
 
             return Loaded[openerIndex] != actual &&
-                   !Actions.Instance.SameActionsByName(intended, actual) &&
-                   actual != 0;
+                   !actions.SameActionsByName(intended, actual) &&
+                   actual != CatchAllAction;
         }
 
         private bool ShouldShift(int openerIndex, int size, uint usedValue)
         {
-            var nextIntended = Actions.Instance.GetActionName(Loaded[openerIndex]);
-            return openerIndex + 1 < size && (Loaded[openerIndex + 1] == usedValue || Actions.Instance.SameActionsByName(nextIntended, usedValue));
+            var nextIntended = actions.GetActionName(Loaded[openerIndex]);
+            return openerIndex + 1 < size && (Loaded[openerIndex + 1] == usedValue || actions.SameActionsByName(nextIntended, usedValue));
         }
 
         private static Dictionary<Jobs, Dictionary<string, List<uint>>> LoadOpeners(string path)
