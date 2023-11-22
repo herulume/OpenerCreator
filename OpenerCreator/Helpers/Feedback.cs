@@ -7,7 +7,7 @@ namespace OpenerCreator.Helpers
     {
         public enum MessageType
         {
-            Feedback,
+            Success,
             Info,
             Error,
         }

@@ -66,7 +66,7 @@ namespace OpenerCreator.Hooks
             used.Clear();
 
             var feedback = new Feedback();
-            feedback.AddMessage(Feedback.MessageType.Feedback, "No opener defined.");
+            feedback.AddMessage(Feedback.MessageType.Info, "No opener defined.");
             provideFeedback(feedback);
         }
 

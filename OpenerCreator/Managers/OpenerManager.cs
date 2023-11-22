@@ -76,7 +76,7 @@ namespace OpenerCreator.Managers
 
             if (Loaded.SequenceEqual(used))
             {
-                feedback.AddMessage(Feedback.MessageType.Feedback, "Great job! Opener executed perfectly.");
+                feedback.AddMessage(Feedback.MessageType.Success, "Great job! Opener executed perfectly.");
                 provideFeedback(feedback);
                 return;
             }
@@ -92,7 +92,7 @@ namespace OpenerCreator.Managers
                 if (HasActionDifference(used, openerIndex, i, out var intended, out var actual))
                 {
                     error = true;
-                    feedback.AddMessage(Feedback.MessageType.Feedback, $"Difference in action {i + 1}: Substituted {intended} for {actions.GetActionName(actual)}");
+                    feedback.AddMessage(Feedback.MessageType.Error, $"Difference in action {i + 1}: Substituted {intended} for {actions.GetActionName(actual)}");
                     wrongAction(openerIndex);
 
                     if (ShouldShift(openerIndex, size, used[i]))
@@ -104,12 +104,12 @@ namespace OpenerCreator.Managers
 
             if (!error)
             {
-                feedback.AddMessage(Feedback.MessageType.Feedback, "Great job! Opener executed perfectly.");
+                feedback.AddMessage(Feedback.MessageType.Success, "Great job! Opener executed perfectly.");
             }
 
             if (shift != 0)
             {
-                feedback.AddMessage(Feedback.MessageType.Feedback, $"You shifted your opener by {shift} actions.");
+                feedback.AddMessage(Feedback.MessageType.Info, $"You shifted your opener by {shift} actions.");
             }
 
             provideFeedback(feedback);
