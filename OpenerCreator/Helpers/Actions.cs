@@ -8,7 +8,7 @@ namespace OpenerCreator.Helpers
 {
     public class Actions
     {
-        private static Actions? instance;
+        private static Actions? SingletonInstance;
         private static readonly object LockObject = new();
         private readonly Dictionary<uint, LuminaAction> actionsSheet;
         private readonly IEnumerable<LuminaAction> nonRepeatedActions;
@@ -26,14 +26,14 @@ namespace OpenerCreator.Helpers
         {
             get
             {
-                if (instance == null)
+                if (SingletonInstance == null)
                 {
                     lock (LockObject)
                     {
-                        instance ??= new Actions();
+                        SingletonInstance ??= new Actions();
                     }
                 }
-                return instance;
+                return SingletonInstance;
             }
         }
 
@@ -55,7 +55,7 @@ namespace OpenerCreator.Helpers
             .Order()
             .ToList();
 
-        public bool SameActions(string name, uint aId) => actionsSheet[aId].Name.ToString().ToLower().Contains(name.ToLower());
+        public bool SameActionsByName(string name, uint aId) => actionsSheet[aId].Name.ToString().ToLower().Contains(name.ToLower());
 
         public static bool IsPvEAction(LuminaAction a) =>
             a.RowId == 0 || // 0 is used as an catch-all action

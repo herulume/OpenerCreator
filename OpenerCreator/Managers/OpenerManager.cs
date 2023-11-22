@@ -9,7 +9,7 @@ namespace OpenerCreator.Managers
 {
     public class OpenerManager
     {
-        private static OpenerManager? instance;
+        private static OpenerManager? SingletonInstance;
         private static readonly object LockObject = new();
         public List<uint> Loaded { get; set; } = new List<uint>();
         private readonly Dictionary<Jobs, Dictionary<string, List<uint>>> openers;
@@ -26,14 +26,14 @@ namespace OpenerCreator.Managers
         {
             get
             {
-                if (instance == null)
+                if (SingletonInstance == null)
                 {
                     lock (LockObject)
                     {
-                        instance ??= new OpenerManager();
+                        SingletonInstance ??= new OpenerManager();
                     }
                 }
-                return instance;
+                return SingletonInstance;
             }
         }
 
@@ -66,12 +66,10 @@ namespace OpenerCreator.Managers
             }
         }
 
-        // TODO: Clean
         public void Compare(List<uint> used, Action<List<string>> provideFeedback, Action<int> wrongAction)
         {
             var feedback = new List<string>();
             used = used.Take(Loaded.Count).ToList();
-            var error = false;
 
             if (Loaded.SequenceEqual(used))
             {
@@ -79,41 +77,57 @@ namespace OpenerCreator.Managers
                 provideFeedback(feedback);
                 return;
             }
-            else
+
+            var error = false;
+            var size = Math.Min(Loaded.Count, used.Count);
+            var shift = 0;
+
+            for (var i = 0; i + shift < size; i++)
             {
-                var size = Math.Min(Loaded.Count, used.Count);
-                var shift = 0;
-                // Identify differences
-                for (var i = 0; i + shift < size; i++)
+                var openerIndex = i + shift;
+
+                if (HasActionDifference(used, openerIndex, i, out var intended, out var actual))
                 {
-                    var openerIndex = i + shift;
-                    var intended = Actions.Instance.GetActionName(Loaded[openerIndex]);
-                    if (Loaded[openerIndex] != used[i] && !Actions.Instance.SameActions(intended, used[i]) && used[i] != 0)
+                    error = true;
+                    feedback.Add(Messages.ActionDiff(i, intended, Actions.Instance.GetActionName(actual)));
+                    wrongAction(openerIndex);
+
+                    if (ShouldShift(openerIndex, size, used[i]))
                     {
-                        error = true;
-                        var actual = Actions.Instance.GetActionName(used[i]);
-                        feedback.Add(Messages.ActionDiff(i, intended, actual));
-                        wrongAction(openerIndex);
-                        var nextIntended = Actions.Instance.GetActionName(Loaded[openerIndex]);
-                        if (openerIndex + 1 < size && (Loaded[openerIndex + 1] == used[i] || Actions.Instance.SameActions(nextIntended, used[i])))
-                            shift++;
+                        shift++;
                     }
                 }
-
-                if (!error)
-                {
-                    feedback.Add(Messages.SuccessExec());
-                }
-
-                if (shift != 0)
-                {
-                    feedback.Add(Messages.OpenerShift(shift));
-                }
             }
+
+            if (!error)
+            {
+                feedback.Add(Messages.SuccessExec());
+            }
+
+            if (shift != 0)
+            {
+                feedback.Add(Messages.OpenerShift(shift));
+            }
+
             provideFeedback(feedback);
         }
+        private bool HasActionDifference(List<uint> used, int openerIndex, int usedIndex, out string intended, out uint actual)
+        {
+            intended = Actions.Instance.GetActionName(Loaded[openerIndex]);
+            actual = used[usedIndex];
 
-        private Dictionary<Jobs, Dictionary<string, List<uint>>> LoadOpeners(string path)
+            return Loaded[openerIndex] != actual &&
+                   !Actions.Instance.SameActionsByName(intended, actual) &&
+                   actual != 0;
+        }
+
+        private bool ShouldShift(int openerIndex, int size, uint usedValue)
+        {
+            var nextIntended = Actions.Instance.GetActionName(Loaded[openerIndex]);
+            return openerIndex + 1 < size && (Loaded[openerIndex + 1] == usedValue || Actions.Instance.SameActionsByName(nextIntended, usedValue));
+        }
+
+        private static Dictionary<Jobs, Dictionary<string, List<uint>>> LoadOpeners(string path)
         {
             try
             {
