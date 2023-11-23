@@ -53,7 +53,7 @@ namespace OpenerCreator.Hooks
             this.provideFeedback = provideFeedback;
             this.wrongAction = wrongAction;
             this.usedActionHook?.Enable();
-            this.nactions = OpenerManager.Instance.Loaded.Count;
+            this.nactions = OpenerManager.Instance(Actions.Instance).Loaded.Count;
         }
 
         public void StopRecording()
@@ -77,7 +77,7 @@ namespace OpenerCreator.Hooks
 
             this.usedActionHook?.Disable();
             this.nactions = 0;
-            OpenerManager.Instance.Compare(used, provideFeedback, wrongAction);
+            OpenerManager.Instance(Actions.Instance).Compare(used, provideFeedback, wrongAction);
             used.Clear();
         }
 

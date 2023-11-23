@@ -3,10 +3,14 @@ using System.Linq;
 using Dalamud.Interface.Internal;
 using LuminaAction = Lumina.Excel.GeneratedSheets.Action;
 
-
 namespace OpenerCreator.Helpers
 {
-    public class Actions
+    public interface IActionManager
+    {
+        string GetActionName(uint action);
+        bool SameActionsByName(string action1, uint action2);
+    }
+    public class Actions : IActionManager
     {
         private static Actions? SingletonInstance;
         private static readonly object LockObject = new();

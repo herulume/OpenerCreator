@@ -53,7 +53,7 @@ public class OpenerCreatorWindow : IDisposable
         showDefault = false;
         feedback = new();
         actions = new();
-        openers = OpenerManager.Instance.GetNames();
+        openers = OpenerManager.Instance(Actions.Instance).GetNames();
         filteredActions = Actions.Instance.NonRepeatedIdList();
         wrongActions = new();
 
@@ -197,15 +197,15 @@ public class OpenerCreatorWindow : IDisposable
         ImGui.BeginChild("loadopener");
         DrawClear();
 
-        var defaultOpeners = OpenerManager.Instance.GetDefaultNames();
-        openers = OpenerManager.Instance.GetNames();
+        var defaultOpeners = OpenerManager.Instance(Actions.Instance).GetDefaultNames();
+        openers = OpenerManager.Instance(Actions.Instance).GetNames();
         ImGui.Checkbox("Default Openers", ref showDefault);
         if (showDefault)
         {
-            DrawOpeners(defaultOpeners, "Default", OpenerManager.Instance.GetDefaultOpener);
+            DrawOpeners(defaultOpeners, "Default", OpenerManager.Instance(Actions.Instance).GetDefaultOpener);
 
         }
-        DrawOpeners(openers, "Saved", OpenerManager.Instance.GetOpener, true);
+        DrawOpeners(openers, "Saved", OpenerManager.Instance(Actions.Instance).GetOpener, true);
 
 
         ImGui.EndChild();
@@ -226,17 +226,17 @@ public class OpenerCreatorWindow : IDisposable
                     if (ImGui.Button($"Load##{prefix}#{opener}"))
                     {
                         actions = getOpener(opener, openerJob.Item1);
-                        actions = OpenerManager.Instance.GetDefaultOpener(opener, openerJob.Item1);
-                        OpenerManager.Instance.Loaded = actions;
+                        actions = OpenerManager.Instance(Actions.Instance).GetDefaultOpener(opener, openerJob.Item1);
+                        OpenerManager.Instance(Actions.Instance).Loaded = actions;
                     }
                     if (delete)
                     {
                         ImGui.SameLine();
                         if (ImGui.Button($"Delete##{prefix}#{opener}"))
                         {
-                            OpenerManager.Instance.DeleteOpener(opener, openerJob.Item1);
-                            OpenerManager.Instance.SaveOpeners();
-                            openers = OpenerManager.Instance.GetNames();
+                            OpenerManager.Instance(Actions.Instance).DeleteOpener(opener, openerJob.Item1);
+                            OpenerManager.Instance(Actions.Instance).SaveOpeners();
+                            openers = OpenerManager.Instance(Actions.Instance).GetNames();
                         }
                     }
                 }
@@ -255,8 +255,8 @@ public class OpenerCreatorWindow : IDisposable
         // Save opener
         if (ImGui.Button("Save") && !name.IsNullOrEmpty())
         {
-            OpenerManager.Instance.AddOpener(name, jobFilter, actions);
-            OpenerManager.Instance.SaveOpeners();
+            OpenerManager.Instance(Actions.Instance).AddOpener(name, jobFilter, actions);
+            OpenerManager.Instance(Actions.Instance).SaveOpeners();
         }
         ImGui.SameLine();
         ImGui.InputText("Opener name", ref name, 32);
@@ -298,7 +298,7 @@ public class OpenerCreatorWindow : IDisposable
             if (ImGui.ImageButton(GetIcon(filteredActions[i]), IconSize))
             {
                 actions.Add(filteredActions[i]);
-                OpenerManager.Instance.Loaded = actions;
+                OpenerManager.Instance(Actions.Instance).Loaded = actions;
             }
 
             ImGui.SameLine();

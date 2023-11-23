@@ -18,6 +18,8 @@ namespace OpenerCreator.Helpers
 
         public List<string> GetMessages() => messages.Select(ToMessage).ToList();
 
+        public List<(MessageType, string)> GetList() => messages;
+
         public static string ToMessage((MessageType, string) m) => $"{m.Item1}: {m.Item2}";
     }
 }

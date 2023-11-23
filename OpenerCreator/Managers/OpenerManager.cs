@@ -12,32 +12,34 @@ namespace OpenerCreator.Managers
         private const uint CatchAllAction = 0;
         private static OpenerManager? SingletonInstance;
         private static readonly object LockObject = new();
-        private readonly Actions actions;
+        private readonly IActionManager actions;
         public List<uint> Loaded { get; set; } = new List<uint>();
         private readonly Dictionary<Jobs, Dictionary<string, List<uint>>> openers;
         private readonly Dictionary<Jobs, Dictionary<string, List<uint>>> defaultOpeners;
-        private readonly string openersFile = Path.Combine(OpenerCreator.PluginInterface.ConfigDirectory.FullName, "openers.json");
+        private string openersFile { get; init; }
 
-        private OpenerManager(Actions actions)
+        private OpenerManager(IActionManager actions)
         {
             this.actions = actions;
-            this.defaultOpeners = LoadOpeners(Path.Combine(OpenerCreator.PluginInterface.AssemblyLocation.Directory!.FullName, "openers.json"));
-            this.openers = LoadOpeners(openersFile);
+            try
+            {
+                this.defaultOpeners = LoadOpeners(Path.Combine(OpenerCreator.PluginInterface.AssemblyLocation.Directory!.FullName, "openers.json"));
+                this.openersFile = Path.Combine(OpenerCreator.PluginInterface.ConfigDirectory.FullName, "openers.json");
+                this.openers = LoadOpeners(openersFile);
+            }
+            catch { }
         }
 
-        public static OpenerManager Instance
+        public static OpenerManager Instance(IActionManager actionManager)
         {
-            get
+            if (SingletonInstance == null)
             {
-                if (SingletonInstance == null)
+                lock (LockObject)
                 {
-                    lock (LockObject)
-                    {
-                        SingletonInstance ??= new OpenerManager(Actions.Instance);
-                    }
+                    SingletonInstance ??= new OpenerManager(actionManager);
                 }
-                return SingletonInstance;
             }
+            return SingletonInstance;
         }
 
         public void AddOpener(string name, Jobs job, List<uint> actions)
