@@ -35,16 +35,19 @@ namespace OpenerCreator.Managers
             this.defaultOpeners = LoadOpeners(Path.Combine(OpenerCreator.PluginInterface.AssemblyLocation.Directory!.FullName, "openers.json"));
         }
 
-        public static OpenerManager Instance(IActionManager actionManager)
+        public static OpenerManager Instance
         {
-            if (SingletonInstance == null)
+            get
             {
-                lock (LockObject)
+                if (SingletonInstance == null)
                 {
-                    SingletonInstance ??= new OpenerManager(actionManager, new ValueTuple());
+                    lock (LockObject)
+                    {
+                        SingletonInstance ??= new OpenerManager(Actions.Instance, new ValueTuple());
+                    }
                 }
+                return SingletonInstance;
             }
-            return SingletonInstance;
         }
 
         public void AddOpener(string name, Jobs job, List<uint> actions)
