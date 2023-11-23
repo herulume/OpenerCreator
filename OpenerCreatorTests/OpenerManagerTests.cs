@@ -6,20 +6,21 @@ namespace OpenerCreatorTests
     public class ActionsMock : IActionManager
     {
         public ActionsMock() { }
-        public string GetActionName(uint action) => "Ayylmao";
+        public string GetActionName(uint action) => action.ToString();
 
-        public bool SameActionsByName(string action1, uint action2) => true;
+        public bool SameActionsByName(string action1, uint action2) => action1 == action2.ToString();
     }
+
     public class OpenerManagerTests
     {
         [Fact]
         public void Compare_WhenOpenerExecutedPerfectly_ShouldAddSuccessMessage()
         {
             // Arrange
-            var openerManager = OpenerManager.Instance(new ActionsMock());
-            var used = new List<uint> { 3574, 152, 153, 3577, 7421, 3577, 357 };
+            var openerManager = new OpenerManager(new ActionsMock());
+            openerManager.Loaded = new List<uint> { 1, 2, 3, 1, 2 };
+            var used = new List<uint> { 1, 2, 3, 1, 2 };
             var feedback = new Feedback();
-            openerManager.Loaded = used;
 
             // Act
             openerManager.Compare(used, (f) => { feedback = f; }, (_) => { });
@@ -29,38 +30,62 @@ namespace OpenerCreatorTests
             Assert.Single(successMessages);
             Assert.Single(feedback.GetList());
         }
-        /*
-[Fact]
-public void Compare_WhenOpenerHasDifference_ShouldAddErrorMessageAndInvokeWrongAction()
-{
-    // Arrange
-    var openerManager = new OpenerManager(Actions.Instance);
-    var used = new List<uint> { // data for a differing execution };
-    var feedback = new Feedback();
 
-    // Act
-    openerManager.Compare(used, feedback.AddMessage, Assert.Fail);
+        [Fact]
+        public void Compare_WhenOpenerExecutedPerfectlyWithCatchAll_ShouldAddSuccessMessage()
+        {
+            // Arrange
+            var openerManager = new OpenerManager(new ActionsMock());
+            openerManager.Loaded = new List<uint> { 1, 2, 0, 1, 2 };
+            var used = new List<uint> { 1, 2, 3, 1, 2 };
+            var feedback = new Feedback();
 
-    // Assert
-    var successMessages = feedback.GetMessages();
-    Assert.Contains((Feedback.MessageType.Error, // expected error message), successMessages);
-}
+            // Act
+            openerManager.Compare(used, (f) => { feedback = f; }, (_) => { });
 
-[Fact]
-public void Compare_WhenOpenerShifted_ShouldAddInfoMessage()
-{
-    // Arrange
-    var openerManager = new OpenerManager(Actions.Instance);
-    var used = new List<uint> { // data for a shifted execution};
-    var feedback = new Feedback();
+            // Assert
+            var successMessages = feedback.GetList().Where(m => m.Item1 == Feedback.MessageType.Success);
+            Assert.Single(successMessages);
+            Assert.Single(feedback.GetList());
+        }
 
-    // Act
-    openerManager.Compare(used, feedback.AddMessage, Assert.Fail);
+        [Fact]
+        public void Compare_WhenOpenerHasDifference_ShouldAddErrorMessageAndInvokeWrongAction()
+        {
+            // Arrange
+            var openerManager = new OpenerManager(new ActionsMock());
+            openerManager.Loaded = new List<uint> { 1, 2, 3, 0, 2 };
+            var used = new List<uint> { 1, 5, 3, 1, 1 };
+            var feedback = new Feedback();
 
-    // Assert
-    var successMessages = feedback.GetMessages();
-    Assert.Contains((Feedback.MessageType.Info, "You shifted your opener by 1 actions."), successMessages);
-}
-*/
+            // Act
+            openerManager.Compare(used, (f) => { feedback = f; }, (_) => { });
+
+            // Assert
+            var errorMessages = feedback.GetList().Where(m => m.Item1 == Feedback.MessageType.Error);
+            Assert.Equal(2, errorMessages.Count());
+            Assert.Equal(2, feedback.GetList().Count);
+        }
+
+        [Fact]
+        public void Compare_WhenOpenerShifted_ShouldAddInfoMessage()
+        {
+            // Arrange
+            var openerManager = new OpenerManager(new ActionsMock());
+            openerManager.Loaded = new List<uint> { 1, 2, 3, 0, 5, 6 };
+            var used = new List<uint> { 1, 3, 4, 5, 6, 99 };
+            var feedback = new Feedback();
+
+            // Act
+            openerManager.Compare(used, (f) => { feedback = f; }, (_) => { });
+
+            // Assert
+            var shiftMessages = feedback.GetList().Where(m => m.Item1 == Feedback.MessageType.Info);
+            var errorMessages = feedback.GetList().Where(m => m.Item1 == Feedback.MessageType.Error);
+            Assert.Single(errorMessages);
+            Assert.Single(shiftMessages);
+            Assert.Equal(2, feedback.GetList().Count);
+            Assert.Contains("by 1 action", string.Join("\n", feedback.GetMessages()));
+        }
     }
 }

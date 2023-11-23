@@ -18,16 +18,21 @@ namespace OpenerCreator.Managers
         private readonly Dictionary<Jobs, Dictionary<string, List<uint>>> defaultOpeners;
         private string openersFile { get; init; }
 
-        private OpenerManager(IActionManager actions)
+        // Just for testing
+        // need a better approach
+        public OpenerManager(IActionManager actions)
         {
             this.actions = actions;
-            try
-            {
-                this.defaultOpeners = LoadOpeners(Path.Combine(OpenerCreator.PluginInterface.AssemblyLocation.Directory!.FullName, "openers.json"));
-                this.openersFile = Path.Combine(OpenerCreator.PluginInterface.ConfigDirectory.FullName, "openers.json");
-                this.openers = LoadOpeners(openersFile);
-            }
-            catch { }
+            this.openersFile = "empty";
+            this.openers = new Dictionary<Jobs, Dictionary<string, List<uint>>>();
+            this.defaultOpeners = new Dictionary<Jobs, Dictionary<string, List<uint>>>();
+        }
+
+        private OpenerManager(IActionManager actions, ValueTuple _) : this(actions)
+        {
+            this.openersFile = Path.Combine(OpenerCreator.PluginInterface.ConfigDirectory.FullName, "openers.json");
+            this.openers = LoadOpeners(openersFile);
+            this.defaultOpeners = LoadOpeners(Path.Combine(OpenerCreator.PluginInterface.AssemblyLocation.Directory!.FullName, "openers.json"));
         }
 
         public static OpenerManager Instance(IActionManager actionManager)
@@ -36,7 +41,7 @@ namespace OpenerCreator.Managers
             {
                 lock (LockObject)
                 {
-                    SingletonInstance ??= new OpenerManager(actionManager);
+                    SingletonInstance ??= new OpenerManager(actionManager, new ValueTuple());
                 }
             }
             return SingletonInstance;
@@ -104,26 +109,27 @@ namespace OpenerCreator.Managers
                 }
             }
 
-            if (!error)
+            if (!error && shift == 0)
             {
                 feedback.AddMessage(Feedback.MessageType.Success, "Great job! Opener executed perfectly.");
             }
 
             if (shift != 0)
             {
-                feedback.AddMessage(Feedback.MessageType.Info, $"You shifted your opener by {shift} actions.");
+                feedback.AddMessage(Feedback.MessageType.Info, $"You shifted your opener by {shift} {(shift == 1 ? "action" : "actions")}.");
             }
 
             provideFeedback(feedback);
         }
         private bool HasActionDifference(List<uint> used, int openerIndex, int usedIndex, out string intended, out uint actual)
         {
-            intended = actions.GetActionName(Loaded[openerIndex]);
+            var intendedId = Loaded[openerIndex];
+            intended = actions.GetActionName(intendedId);
             actual = used[usedIndex];
 
             return Loaded[openerIndex] != actual &&
                    !actions.SameActionsByName(intended, actual) &&
-                   actual != CatchAllAction;
+                   intendedId != CatchAllAction;
         }
 
         private bool ShouldShift(int openerIndex, int size, uint usedValue)
