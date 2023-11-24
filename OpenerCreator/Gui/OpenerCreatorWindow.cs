@@ -223,7 +223,7 @@ public class OpenerCreatorWindow : IDisposable
 
                     ImGui.Text(opener);
                     ImGui.SameLine();
-                    if (ImGui.Button($"Load##{prefix}#{opener}"))
+                    if (ImGui.Button($"Load##{prefix}#{opener}#{openerJob.Item1}"))
                     {
                         actions = getOpener(opener, openerJob.Item1);
                         actions = OpenerManager.Instance.GetDefaultOpener(opener, openerJob.Item1);
