@@ -104,7 +104,6 @@ namespace OpenerCreator.Hooks
                     this.Compare();
                     return;
                 }
-
             }
         }
     }
