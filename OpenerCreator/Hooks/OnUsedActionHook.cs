@@ -20,7 +20,7 @@ namespace OpenerCreator.Hooks
         private int nactions;
         private static readonly int MaxItemCount = 50;
         private readonly List<uint> used = new(MaxItemCount);
-        private Action<Feedback> provideFeedback;
+        private Action<List<string>> provideFeedback;
         private Action<int> wrongAction;
 
         public OnUsedActionHook()
@@ -45,7 +45,7 @@ namespace OpenerCreator.Hooks
             GC.SuppressFinalize(this);
         }
 
-        public void StartRecording(int cd, Action<Feedback> provideFeedback, Action<int> wrongAction)
+        public void StartRecording(int cd, Action<List<string>> provideFeedback, Action<int> wrongAction)
         {
             if (this.usedActionHook!.IsEnabled)
                 return;
@@ -65,9 +65,11 @@ namespace OpenerCreator.Hooks
             this.nactions = 0;
             used.Clear();
 
-            var feedback = new Feedback();
-            feedback.AddMessage(Feedback.MessageType.Info, "No opener defined.");
-            provideFeedback(feedback);
+            var message = new List<string>
+                {
+                    Messages.NoOpener
+                };
+            provideFeedback(message);
         }
 
         private void Compare()
@@ -104,6 +106,7 @@ namespace OpenerCreator.Hooks
                     this.Compare();
                     return;
                 }
+
             }
         }
     }

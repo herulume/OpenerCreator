@@ -5,8 +5,6 @@ VisualStudioVersion = 17.7.34202.233
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenerCreator", "OpenerCreator\OpenerCreator.csproj", "{13C812E9-0D42-4B95-8646-40EEBF30636F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenerCreatorTests", "OpenerCreatorTests\OpenerCreatorTests.csproj", "{11CB18FF-0C2C-4E53-9C1F-461526BEDE1F}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -17,10 +15,6 @@ Global
 		{13C812E9-0D42-4B95-8646-40EEBF30636F}.Debug|x64.Build.0 = Debug|x64
 		{13C812E9-0D42-4B95-8646-40EEBF30636F}.Release|x64.ActiveCfg = Release|x64
 		{13C812E9-0D42-4B95-8646-40EEBF30636F}.Release|x64.Build.0 = Release|x64
-		{11CB18FF-0C2C-4E53-9C1F-461526BEDE1F}.Debug|x64.ActiveCfg = Debug|x64
-		{11CB18FF-0C2C-4E53-9C1F-461526BEDE1F}.Debug|x64.Build.0 = Debug|x64
-		{11CB18FF-0C2C-4E53-9C1F-461526BEDE1F}.Release|x64.ActiveCfg = Release|x64
-		{11CB18FF-0C2C-4E53-9C1F-461526BEDE1F}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

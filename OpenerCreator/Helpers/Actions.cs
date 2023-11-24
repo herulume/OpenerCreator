@@ -3,16 +3,12 @@ using System.Linq;
 using Dalamud.Interface.Internal;
 using LuminaAction = Lumina.Excel.GeneratedSheets.Action;
 
+
 namespace OpenerCreator.Helpers
 {
-    public interface IActionManager
+    public class Actions
     {
-        string GetActionName(uint action);
-        bool SameActionsByName(string action1, uint action2);
-    }
-    public class Actions : IActionManager
-    {
-        private static Actions? SingletonInstance;
+        private static Actions? instance;
         private static readonly object LockObject = new();
         private readonly Dictionary<uint, LuminaAction> actionsSheet;
         private readonly IEnumerable<LuminaAction> nonRepeatedActions;
@@ -30,14 +26,14 @@ namespace OpenerCreator.Helpers
         {
             get
             {
-                if (SingletonInstance == null)
+                if (instance == null)
                 {
                     lock (LockObject)
                     {
-                        SingletonInstance ??= new Actions();
+                        instance ??= new Actions();
                     }
                 }
-                return SingletonInstance;
+                return instance;
             }
         }
 
@@ -59,7 +55,7 @@ namespace OpenerCreator.Helpers
             .Order()
             .ToList();
 
-        public bool SameActionsByName(string name, uint aId) => actionsSheet[aId].Name.ToString().ToLower().Contains(name.ToLower());
+        public bool SameActions(string name, uint aId) => actionsSheet[aId].Name.ToString().ToLower().Contains(name.ToLower());
 
         public static bool IsPvEAction(LuminaAction a) =>
             a.RowId == 0 || // 0 is used as an catch-all action
