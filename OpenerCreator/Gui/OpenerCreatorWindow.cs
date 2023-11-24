@@ -31,7 +31,7 @@ public class OpenerCreatorWindow : IDisposable
     private List<Tuple<Jobs, List<string>>> openers;
     private readonly HashSet<int> wrongActions;
 
-    private readonly Action<int, Action<List<string>>, Action<int>> startRecording;
+    private readonly Action<int, Action<Feedback>, Action<int>> startRecording;
     private readonly Action stopRecording;
 
     private Dictionary<uint, IDalamudTextureWrap> iconCache;
@@ -41,7 +41,7 @@ public class OpenerCreatorWindow : IDisposable
     private static Vector2 IconSize = new(32);
     private static Vector2 CountdownNumberSize = new(240, 320);
 
-    public OpenerCreatorWindow(Action<int, Action<List<string>>, Action<int>> startRecording, Action stopRecording)
+    public OpenerCreatorWindow(Action<int, Action<Feedback>, Action<int>> startRecording, Action stopRecording)
     {
         Enabled = false;
 
@@ -405,11 +405,11 @@ public class OpenerCreatorWindow : IDisposable
         this.wrongActions.Add(i);
     }
 
-    public void AddFeedback(List<string> feedback)
+    public void AddFeedback(Feedback feedback)
     {
         this.countdownStart = null;
         this.recording = false;
-        this.feedback = feedback;
+        this.feedback = feedback.GetMessages();
     }
 
     private nint GetIcon(uint id)
