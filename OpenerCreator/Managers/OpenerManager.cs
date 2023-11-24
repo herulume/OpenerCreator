@@ -99,7 +99,7 @@ namespace OpenerCreator.Managers
             {
                 var openerIndex = i + shift;
 
-                if (HasActionDifference(used, openerIndex, i, out var intended, out var actual))
+                if (AreActionsDifferent(used, openerIndex, i, out var intended, out var actual))
                 {
                     error = true;
                     feedback.AddMessage(Feedback.MessageType.Error, $"Difference in action {i + 1}: Substituted {intended} for {actions.GetActionName(actual)}");
@@ -124,7 +124,7 @@ namespace OpenerCreator.Managers
 
             provideFeedback(feedback);
         }
-        private bool HasActionDifference(List<uint> used, int openerIndex, int usedIndex, out string intended, out uint actual)
+        private bool AreActionsDifferent(List<uint> used, int openerIndex, int usedIndex, out string intended, out uint actual)
         {
             var intendedId = Loaded[openerIndex];
             intended = actions.GetActionName(intendedId);
