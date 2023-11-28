@@ -21,7 +21,6 @@ public class OpenerCreatorWindow : IDisposable
     private string search;
     private Jobs jobFilter;
     private int countdown;
-    private bool showDefault;
     private Stopwatch? countdownStart;
     private bool recording;
     private List<string> feedback;
@@ -50,7 +49,6 @@ public class OpenerCreatorWindow : IDisposable
         jobFilter = Jobs.ANY;
         countdown = 7;
         recording = false;
-        showDefault = false;
         feedback = new();
         actions = new();
         openers = OpenerManager.Instance.GetNames();
@@ -196,17 +194,13 @@ public class OpenerCreatorWindow : IDisposable
 
         ImGui.BeginChild("loadopener");
         DrawClear();
-
         var defaultOpeners = OpenerManager.Instance.GetDefaultNames();
         openers = OpenerManager.Instance.GetNames();
-        ImGui.Checkbox("Default Openers", ref showDefault);
-        if (showDefault)
-        {
-            DrawOpeners(defaultOpeners, "Default", OpenerManager.Instance.GetDefaultOpener);
 
-        }
+        ImGui.BeginTabBar("OpenerCreatorLoaderTabBar");
+        DrawOpeners(defaultOpeners, "Default", OpenerManager.Instance.GetDefaultOpener);
         DrawOpeners(openers, "Saved", OpenerManager.Instance.GetOpener, true);
-
+        ImGui.EndTabBar();
 
         ImGui.EndChild();
         ImGui.EndTabItem();
@@ -214,6 +208,9 @@ public class OpenerCreatorWindow : IDisposable
 
     private void DrawOpeners(List<Tuple<Jobs, List<string>>> openers, string prefix, Func<string, Jobs, List<uint>> getOpener, bool delete = false)
     {
+        if (!ImGui.BeginTabItem($"{prefix} Openers"))
+            return;
+
         foreach (var openerJob in openers)
         {
             CollapsingHeader($"{prefix} {openerJob.Item1} Openers", () =>
@@ -242,6 +239,7 @@ public class OpenerCreatorWindow : IDisposable
                 }
             });
         }
+        ImGui.EndTabItem();
     }
 
     private void DrawAbilityFilter()
@@ -421,7 +419,7 @@ public class OpenerCreatorWindow : IDisposable
 
     private static void CollapsingHeader(string label, Action action)
     {
-        if (ImGui.CollapsingHeader(label, ImGuiTreeNodeFlags.DefaultOpen))
+        if (ImGui.CollapsingHeader(label, ImGuiTreeNodeFlags.None))
         {
             action();
         }
