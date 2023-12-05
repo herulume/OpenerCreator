@@ -11,7 +11,7 @@ namespace OpenerCreator
     {
         public string Name => "OpenerCreator";
         private readonly string command = "/ocrt";
-        public Configuration Configuration { get; init; }
+        public static Configuration Config = null!;
         private Gui.OpenerCreatorWindow OpenerCreatorGui { get; init; }
         private OnUsedActionHook OnUsedHook { get; init; }
 
@@ -28,10 +28,9 @@ namespace OpenerCreator
         {
             this.OnUsedHook = new OnUsedActionHook();
 
-            this.Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-            this.Configuration.Initialize(PluginInterface);
-
             OpenerCreatorGui = new OpenerCreatorWindow(this.OnUsedHook.StartRecording, this.OnUsedHook.StopRecording);
+
+            Config = Configuration.Load();
 
             PluginInterface.UiBuilder.Draw += OpenerCreatorGui.Draw;
             PluginInterface.UiBuilder.OpenConfigUi += () => OpenerCreatorGui.Enabled = true;

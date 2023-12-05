@@ -20,7 +20,6 @@ public class OpenerCreatorWindow : IDisposable
     private string name;
     private string search;
     private Jobs jobFilter;
-    private int countdown;
     private Stopwatch? countdownStart;
     private bool recording;
     private List<string> feedback;
@@ -47,7 +46,6 @@ public class OpenerCreatorWindow : IDisposable
         name = "";
         search = "";
         jobFilter = Jobs.ANY;
-        countdown = 7;
         recording = false;
         feedback = new();
         actions = new();
@@ -315,8 +313,11 @@ public class OpenerCreatorWindow : IDisposable
         ImGui.BeginChild("recordactions");
         ImGui.Text("Start a countdown, record your actions and compare them with your opener.");
 
-        if (ImGui.InputInt("Countdown timer", ref countdown))
-            countdown = Math.Clamp(countdown, 0, 30);
+        if (ImGui.InputInt("Countdown timer", ref OpenerCreator.Config.CountdownTime))
+        {
+            OpenerCreator.Config.CountdownTime = Math.Clamp(OpenerCreator.Config.CountdownTime, 0, 30);
+            OpenerCreator.Config.Save();
+        }
 
         if (ImGui.Button("Start Recording"))
         {
@@ -324,7 +325,7 @@ public class OpenerCreatorWindow : IDisposable
             this.wrongActions.Clear();
             this.recording = true;
             this.countdownStart = Stopwatch.StartNew();
-            startRecording(countdown, AddFeedback, WrongAction);
+            startRecording(OpenerCreator.Config.CountdownTime, AddFeedback, WrongAction);
         }
 
         ImGui.SameLine();
@@ -356,7 +357,7 @@ public class OpenerCreatorWindow : IDisposable
             return;
 
         var drawlist = ImGui.GetForegroundDrawList();
-        var timer = countdown - countdownStart.ElapsedMilliseconds / 1000.0f;
+        var timer = OpenerCreator.Config.CountdownTime - countdownStart.ElapsedMilliseconds / 1000.0f;
         var ceil = (float)Math.Ceiling(timer);
         var uspacing = 1.0f / 6.0f;
 
@@ -374,7 +375,7 @@ public class OpenerCreatorWindow : IDisposable
             return;
         }
 
-        var center = ImGui.GetIO().DisplaySize / 2;
+        var center = ImGui.GetMainViewport().GetCenter();
         if (timer <= 0)
             drawlist.AddImage(countdownGo.ImGuiHandle, center - countdownGo.Size / 2, center + countdownGo.Size / 2, Vector2.Zero, Vector2.One, color);
         else if (timer <= 5)

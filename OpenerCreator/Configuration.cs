@@ -1,28 +1,20 @@
-﻿using System;
-using Dalamud.Configuration;
-using Dalamud.Plugin;
+﻿using System.IO;
+using Newtonsoft.Json;
 
 namespace OpenerCreator
 {
-    [Serializable]
-    public class Configuration : IPluginConfiguration
+    public class Configuration
     {
-        public int Version { get; set; } = 0;
-
-        public bool SomePropertyToBeSavedAndWithADefault { get; set; } = true;
-
-        // the below exist just to make saving less cumbersome
-        [NonSerialized]
-        private DalamudPluginInterface? PluginInterface;
-
-        public void Initialize(DalamudPluginInterface pluginInterface)
+        public int CountdownTime = 7;
+        
+        public static Configuration Load()
         {
-            this.PluginInterface = pluginInterface;
+            return OpenerCreator.PluginInterface.ConfigFile.Exists ? JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(OpenerCreator.PluginInterface.ConfigFile.FullName)) ?? new() : new();
         }
 
         public void Save()
         {
-            this.PluginInterface!.SavePluginConfig(this);
+            File.WriteAllText(OpenerCreator.PluginInterface.ConfigFile.FullName, JsonConvert.SerializeObject(this));
         }
     }
 }
