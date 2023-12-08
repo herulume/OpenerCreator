@@ -447,7 +447,7 @@ public class OpenerCreatorWindow : IDisposable
 
     private static void CollapsingHeader(string label, Action action)
     {
-        if (ImGui.CollapsingHeader(label, ImGuiTreeNodeFlags.None))
+        if (ImGui.CollapsingHeader(label, ImGuiTreeNodeFlags.DefaultOpen))
         {
             action();
         }
