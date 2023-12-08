@@ -23,7 +23,7 @@ namespace OpenerCreator.Helpers
                 .Where(IsPvEAction);
             actionsSheet = pve.ToDictionary(a => a.RowId);
             nonRepeatedActions = pve;
-                //.DistinctBy(a => a.Name.ToString()); // ToString needed since SeStrings are different
+            //.DistinctBy(a => a.Name.ToString()); // ToString needed since SeStrings are different
         }
 
         public static Actions Instance
