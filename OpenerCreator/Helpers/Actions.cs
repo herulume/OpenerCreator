@@ -22,8 +22,8 @@ namespace OpenerCreator.Helpers
             var pve = OpenerCreator.DataManager.GetExcelSheet<LuminaAction>()!
                 .Where(IsPvEAction);
             actionsSheet = pve.ToDictionary(a => a.RowId);
-            nonRepeatedActions = pve
-                .DistinctBy(a => a.Name.ToString()); // ToString needed since SeStrings are different
+            nonRepeatedActions = pve;
+                //.DistinctBy(a => a.Name.ToString()); // ToString needed since SeStrings are different
         }
 
         public static Actions Instance
@@ -66,7 +66,8 @@ namespace OpenerCreator.Helpers
             ((a.ActionCategory.Row is 2 or 3 or 4) // GCD or Weaponskill or oGCD
                 && !a.IsPvP
                 && a.ClassJobLevel > 0 // not an old action
-                && a.ClassJobCategory.Row != 0); // not an old action
+                && a.ClassJobCategory.Row != 0 // not an old action
+            );
 
         public static IDalamudTextureWrap GetTexture(string path)
         {
