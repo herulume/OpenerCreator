@@ -31,6 +31,7 @@ namespace OpenerCreator.Helpers
         // Magical Ranged
         BLM,
         SMN,
-        RDM
+        RDM,
+        BLU
     }
 }
