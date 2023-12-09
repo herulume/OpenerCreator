@@ -12,7 +12,7 @@ namespace OpenerCreator.Helpers
             Error,
         }
 
-        private readonly List<(MessageType type, string message)> messages = new();
+        private readonly List<(MessageType type, string message)> messages = [];
 
         public void AddMessage(MessageType type, string message) => messages.Add((type, message));
 

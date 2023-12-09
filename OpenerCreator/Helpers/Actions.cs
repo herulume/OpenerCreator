@@ -75,10 +75,10 @@ namespace OpenerCreator.Helpers
             var pixels = new byte[data.Header.Width * data.Header.Height * 4];
             for (var i = 0; i < data.Header.Width * data.Header.Height; i++)
             {
-                pixels[i * 4 + 0] = data.ImageData[i * 4 + 2];
-                pixels[i * 4 + 1] = data.ImageData[i * 4 + 1];
-                pixels[i * 4 + 2] = data.ImageData[i * 4 + 0];
-                pixels[i * 4 + 3] = data.ImageData[i * 4 + 3];
+                pixels[(i * 4) + 0] = data.ImageData[(i * 4) + 2];
+                pixels[(i * 4) + 1] = data.ImageData[(i * 4) + 1];
+                pixels[(i * 4) + 2] = data.ImageData[(i * 4) + 0];
+                pixels[(i * 4) + 3] = data.ImageData[(i * 4) + 3];
             }
             return OpenerCreator.PluginInterface.UiBuilder.LoadImageRaw(pixels, data.Header.Width, data.Header.Height, 4);
         }
