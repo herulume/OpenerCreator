@@ -29,40 +29,40 @@ namespace OpenerCreator.Hooks
 
             // credits to Tischel for the sig
             // https://github.com/Tischel/ActionTimeline/blob/master/ActionTimeline/Helpers/TimelineManager.cs
-            this.usedActionHook = OpenerCreator.GameInteropProvider.HookFromSignature<UsedActionDelegate>(
+            usedActionHook = OpenerCreator.GameInteropProvider.HookFromSignature<UsedActionDelegate>(
                 "40 55 53 57 41 54 41 55 41 56 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 70",
-                this.DetourUsedAction
+                DetourUsedAction
                 );
-            this.nactions = 0;
-            this.provideFeedback = (_) => { };
-            this.wrongAction = (_) => { };
+            nactions = 0;
+            provideFeedback = (_) => { };
+            wrongAction = (_) => { };
         }
 
         public void Dispose()
         {
-            this.usedActionHook?.Disable();
-            this.usedActionHook?.Dispose();
+            usedActionHook?.Disable();
+            usedActionHook?.Dispose();
             GC.SuppressFinalize(this);
         }
 
         public void StartRecording(int cd, Action<Feedback> provideFeedback, Action<int> wrongAction)
         {
-            if (this.usedActionHook!.IsEnabled)
+            if (usedActionHook!.IsEnabled)
                 return;
 
             this.provideFeedback = provideFeedback;
             this.wrongAction = wrongAction;
-            this.usedActionHook?.Enable();
-            this.nactions = OpenerManager.Instance.Loaded.Count;
+            usedActionHook?.Enable();
+            nactions = OpenerManager.Instance.Loaded.Count;
         }
 
         public void StopRecording()
         {
-            if (!this.usedActionHook!.IsEnabled)
+            if (!usedActionHook!.IsEnabled)
                 return;
 
-            this.usedActionHook?.Disable();
-            this.nactions = 0;
+            usedActionHook?.Disable();
+            nactions = 0;
             used.Clear();
 
             var feedback = new Feedback();
@@ -72,18 +72,18 @@ namespace OpenerCreator.Hooks
 
         private void Compare()
         {
-            if (!this.usedActionHook!.IsEnabled)
+            if (!usedActionHook!.IsEnabled)
                 return;
 
-            this.usedActionHook?.Disable();
-            this.nactions = 0;
+            usedActionHook?.Disable();
+            nactions = 0;
             OpenerManager.Instance.Compare(used, provideFeedback, wrongAction);
             used.Clear();
         }
 
         private void DetourUsedAction(uint sourceId, IntPtr sourceCharacter, IntPtr pos, IntPtr effectHeader, IntPtr effectArray, IntPtr effectTrail)
         {
-            this.usedActionHook?.Original(sourceId, sourceCharacter, pos, effectHeader, effectArray, effectTrail);
+            usedActionHook?.Original(sourceId, sourceCharacter, pos, effectHeader, effectArray, effectTrail);
 
             var player = OpenerCreator.ClientState.LocalPlayer;
             if (player == null || sourceId != player.ObjectId) { return; }
@@ -99,9 +99,9 @@ namespace OpenerCreator.Hooks
                 }
                 used.Add(actionId);
                 nactions--;
-                if (this.nactions <= 0)
+                if (nactions <= 0)
                 {
-                    this.Compare();
+                    Compare();
                     return;
                 }
             }
