@@ -7,32 +7,22 @@ using OpenerCreator.Helpers;
 
 namespace OpenerCreator.Managers
 {
-    public class OpenerManager
+    public class OpenerManager(IActionManager actions)
     {
         private const uint CatchAllAction = 0;
         private static OpenerManager? SingletonInstance;
         private static readonly object LockObject = new();
-        private readonly IActionManager actions;
-        public List<uint> Loaded { get; set; } = new List<uint>();
-        private readonly Dictionary<Jobs, Dictionary<string, List<uint>>> openers;
-        private readonly Dictionary<Jobs, Dictionary<string, List<uint>>> defaultOpeners;
-        private string openersFile { get; init; }
-
-        // Just for testing
-        // need a better approach
-        public OpenerManager(IActionManager actions)
-        {
-            this.actions = actions;
-            this.openersFile = "empty";
-            this.openers = new Dictionary<Jobs, Dictionary<string, List<uint>>>();
-            this.defaultOpeners = new Dictionary<Jobs, Dictionary<string, List<uint>>>();
-        }
+        private readonly IActionManager actions = actions;
+        public List<uint> Loaded { get; set; } = [];
+        private readonly Dictionary<Jobs, Dictionary<string, List<uint>>> openers = [];
+        private readonly Dictionary<Jobs, Dictionary<string, List<uint>>> defaultOpeners = [];
+        private string openersFile { get; init; } = "empty";
 
         private OpenerManager(IActionManager actions, ValueTuple _) : this(actions)
         {
-            this.openersFile = Path.Combine(OpenerCreator.PluginInterface.ConfigDirectory.FullName, "openers.json");
-            this.openers = LoadOpeners(openersFile);
-            this.defaultOpeners = LoadOpeners(Path.Combine(OpenerCreator.PluginInterface.AssemblyLocation.Directory!.FullName, "openers.json"));
+            openersFile = Path.Combine(OpenerCreator.PluginInterface.ConfigDirectory.FullName, "openers.json");
+            openers = LoadOpeners(openersFile);
+            defaultOpeners = LoadOpeners(Path.Combine(OpenerCreator.PluginInterface.AssemblyLocation.Directory!.FullName, "openers.json"));
         }
 
         public static OpenerManager Instance
