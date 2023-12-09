@@ -9,10 +9,12 @@ namespace OpenerCreator
 {
     public sealed class OpenerCreator : IDalamudPlugin
     {
-        public string Name => "OpenerCreator";
+        public static string Name => "OpenerCreator";
         private readonly string command = "/ocrt";
-        public static Configuration Config = null!;
-        private Gui.OpenerCreatorWindow OpenerCreatorGui { get; init; }
+
+        private static readonly object LockObject = new();
+        private static Configuration? Cfg = null;
+        private OpenerCreatorWindow OpenerCreatorGui { get; init; }
         private OnUsedActionHook OnUsedHook { get; init; }
 
         [PluginService][RequiredVersion("1.0")] public static DalamudPluginInterface PluginInterface { get; private set; } = null!;
@@ -26,11 +28,9 @@ namespace OpenerCreator
 
         public OpenerCreator()
         {
-            this.OnUsedHook = new OnUsedActionHook();
+            OnUsedHook = new OnUsedActionHook();
 
-            OpenerCreatorGui = new OpenerCreatorWindow(this.OnUsedHook.StartRecording, this.OnUsedHook.StopRecording);
-
-            Config = Configuration.Load();
+            OpenerCreatorGui = new OpenerCreatorWindow(OnUsedHook.StartRecording, OnUsedHook.StopRecording);
 
             PluginInterface.UiBuilder.Draw += OpenerCreatorGui.Draw;
             PluginInterface.UiBuilder.OpenConfigUi += () => OpenerCreatorGui.Enabled = true;
@@ -41,10 +41,25 @@ namespace OpenerCreator
             });
         }
 
+        public static Configuration Config
+        {
+            get
+            {
+                if (Cfg == null)
+                {
+                    lock (LockObject)
+                    {
+                        Cfg ??= Configuration.Load();
+                    }
+                }
+                return Cfg;
+            }
+        }
+
         public void Dispose()
         {
             CommandManager.RemoveHandler(command);
-            this.OnUsedHook.Dispose();
+            OnUsedHook.Dispose();
             OpenerCreatorGui.Dispose();
         }
     }
