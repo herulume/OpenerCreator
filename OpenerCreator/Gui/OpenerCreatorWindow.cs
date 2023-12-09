@@ -26,6 +26,7 @@ public class OpenerCreatorWindow : IDisposable
     private int? actionDnd;
     private List<uint> actions;
     private List<uint> filteredActions;
+    private JobCategory jobCategoryFilter = JobCategory.None;
     private List<Tuple<Jobs, List<string>>> openers;
     private readonly HashSet<int> wrongActions;
 
@@ -209,33 +210,38 @@ public class OpenerCreatorWindow : IDisposable
         if (!ImGui.BeginTabItem($"{prefix} Openers"))
             return;
 
+        DrawJobCategoryFilters();
+
         foreach (var openerJob in openers)
         {
-            CollapsingHeader($"{prefix} {openerJob.Item1} Openers", () =>
+            if (JobsExtensions.filterBy(this.jobCategoryFilter, openerJob.Item1))
             {
-                foreach (var opener in openerJob.Item2)
+                CollapsingHeader($"{prefix} {openerJob.Item1} Openers", () =>
                 {
+                    foreach (var opener in openerJob.Item2)
+                    {
 
-                    ImGui.Text(opener);
-                    ImGui.SameLine();
-                    if (ImGui.Button($"Load##{prefix}#{opener}#{openerJob.Item1}"))
-                    {
-                        actions = getOpener(opener, openerJob.Item1);
-                        actions = OpenerManager.Instance.GetDefaultOpener(opener, openerJob.Item1);
-                        OpenerManager.Instance.Loaded = actions;
-                    }
-                    if (delete)
-                    {
+                        ImGui.Text(opener);
                         ImGui.SameLine();
-                        if (ImGui.Button($"Delete##{prefix}#{opener}"))
+                        if (ImGui.Button($"Load##{prefix}#{opener}#{openerJob.Item1}"))
                         {
-                            OpenerManager.Instance.DeleteOpener(opener, openerJob.Item1);
-                            OpenerManager.Instance.SaveOpeners();
-                            openers = OpenerManager.Instance.GetNames();
+                            actions = getOpener(opener, openerJob.Item1);
+                            actions = OpenerManager.Instance.GetDefaultOpener(opener, openerJob.Item1);
+                            OpenerManager.Instance.Loaded = actions;
+                        }
+                        if (delete)
+                        {
+                            ImGui.SameLine();
+                            if (ImGui.Button($"Delete##{prefix}#{opener}"))
+                            {
+                                OpenerManager.Instance.DeleteOpener(opener, openerJob.Item1);
+                                OpenerManager.Instance.SaveOpeners();
+                                openers = OpenerManager.Instance.GetNames();
+                            }
                         }
                     }
-                }
-            });
+                });
+            }
         }
         ImGui.EndTabItem();
     }
@@ -399,6 +405,27 @@ public class OpenerCreatorWindow : IDisposable
         }
     }
 
+    private void DrawJobCategoryFilters()
+    {
+        void DrawJobCategoryToggle(string label, JobCategory jobCategory)
+        {
+            if (ImGui.Button(label))
+            {
+                jobCategoryFilter = JobsExtensions.toggle(jobCategoryFilter, jobCategory);
+            }
+        }
+
+        DrawJobCategoryToggle("Tanks", JobCategory.Tank);
+        ImGui.SameLine();
+        DrawJobCategoryToggle("Healers", JobCategory.Healer);
+        ImGui.SameLine();
+        DrawJobCategoryToggle("Melees", JobCategory.Melee);
+        ImGui.SameLine();
+        DrawJobCategoryToggle("Physical Ranged", JobCategory.PhysicalRanged);
+        ImGui.SameLine();
+        DrawJobCategoryToggle("Casters", JobCategory.MagicalRanged);
+    }
+
     private void WrongAction(int i)
     {
         this.wrongActions.Add(i);
@@ -420,7 +447,7 @@ public class OpenerCreatorWindow : IDisposable
 
     private static void CollapsingHeader(string label, Action action)
     {
-        if (ImGui.CollapsingHeader(label, ImGuiTreeNodeFlags.None))
+        if (ImGui.CollapsingHeader(label, ImGuiTreeNodeFlags.DefaultOpen))
         {
             action();
         }

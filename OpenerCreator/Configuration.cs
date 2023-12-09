@@ -6,7 +6,7 @@ namespace OpenerCreator
     public class Configuration
     {
         public int CountdownTime = 7;
-        
+
         public static Configuration Load()
         {
             return OpenerCreator.PluginInterface.ConfigFile.Exists ? JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(OpenerCreator.PluginInterface.ConfigFile.FullName)) ?? new() : new();
