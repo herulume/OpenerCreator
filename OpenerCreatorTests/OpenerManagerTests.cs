@@ -5,7 +5,6 @@ namespace OpenerCreatorTests
 {
     public class ActionsMock : IActionManager
     {
-        public ActionsMock() { }
         public string GetActionName(uint action) => action.ToString();
 
         public bool SameActionsByName(string action1, uint action2) => action1 == action2.ToString();
@@ -17,8 +16,10 @@ namespace OpenerCreatorTests
         public void Compare_WhenOpenerExecutedPerfectly_ShouldAddSuccessMessage()
         {
             // Arrange
-            var openerManager = new OpenerManager(new ActionsMock());
-            openerManager.Loaded = new List<uint> { 1, 2, 3, 1, 2 };
+            var openerManager = new OpenerManager(new ActionsMock())
+            {
+                Loaded = new List<uint> { 1, 2, 3, 1, 2 }
+            };
             var used = new List<uint> { 1, 2, 3, 1, 2 };
             var feedback = new Feedback();
 
@@ -35,8 +36,10 @@ namespace OpenerCreatorTests
         public void Compare_WhenOpenerExecutedPerfectlyWithCatchAll_ShouldAddSuccessMessage()
         {
             // Arrange
-            var openerManager = new OpenerManager(new ActionsMock());
-            openerManager.Loaded = new List<uint> { 1, 2, 0, 1, 2 };
+            var openerManager = new OpenerManager(new ActionsMock())
+            {
+                Loaded = new List<uint> { 1, 2, 0, 1, 2 }
+            };
             var used = new List<uint> { 1, 2, 3, 1, 2 };
             var feedback = new Feedback();
 
@@ -53,8 +56,10 @@ namespace OpenerCreatorTests
         public void Compare_WhenOpenerHasDifference_ShouldAddErrorMessageAndInvokeWrongAction()
         {
             // Arrange
-            var openerManager = new OpenerManager(new ActionsMock());
-            openerManager.Loaded = new List<uint> { 1, 2, 3, 0, 2 };
+            var openerManager = new OpenerManager(new ActionsMock())
+            {
+                Loaded = new List<uint> { 1, 2, 3, 0, 2 }
+            };
             var used = new List<uint> { 1, 5, 3, 1, 1 };
             var feedback = new Feedback();
 
@@ -71,8 +76,10 @@ namespace OpenerCreatorTests
         public void Compare_WhenOpenerShifted_ShouldAddInfoMessage()
         {
             // Arrange
-            var openerManager = new OpenerManager(new ActionsMock());
-            openerManager.Loaded = new List<uint> { 1, 2, 3, 0, 5, 6 };
+            var openerManager = new OpenerManager(new ActionsMock())
+            {
+                Loaded = new List<uint> { 1, 2, 3, 0, 5, 6 }
+            };
             var used = new List<uint> { 1, 3, 4, 5, 6, 99 };
             var feedback = new Feedback();
 

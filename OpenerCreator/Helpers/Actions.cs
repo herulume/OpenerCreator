@@ -1,93 +1,114 @@
 using System.Collections.Generic;
 using System.Linq;
 using Dalamud.Interface.Internal;
+using Lumina.Data.Files;
 using LuminaAction = Lumina.Excel.GeneratedSheets.Action;
 
-namespace OpenerCreator.Helpers
+namespace OpenerCreator.Helpers;
+
+public interface IActionManager
 {
-    public interface IActionManager
+    string GetActionName(uint action);
+    bool SameActionsByName(string action1, uint action2);
+}
+
+public class Actions : IActionManager
+{
+    private static Actions? SingletonInstance;
+    private static readonly object LockObject = new();
+    private readonly IEnumerable<LuminaAction> actionsSheet;
+    private readonly Dictionary<uint, LuminaAction> actionsSheetDictionary;
+
+    private Actions()
     {
-        string GetActionName(uint action);
-        bool SameActionsByName(string action1, uint action2);
+        var pve = OpenerCreator.DataManager.GetExcelSheet<LuminaAction>()!
+                               .Where(IsPvEAction).ToList();
+        actionsSheetDictionary = pve.ToDictionary(a => a.RowId);
+        actionsSheet = pve;
     }
-    public class Actions : IActionManager
+
+    public static Actions Instance
     {
-        private static Actions? SingletonInstance;
-        private static readonly object LockObject = new();
-        private readonly Dictionary<uint, LuminaAction> actionsSheet;
-        private readonly IEnumerable<LuminaAction> nonRepeatedActions;
-
-        private Actions()
+        get
         {
-            var pve = OpenerCreator.DataManager.GetExcelSheet<LuminaAction>()!
-                .Where(IsPvEAction);
-            actionsSheet = pve.ToDictionary(a => a.RowId);
-            nonRepeatedActions = pve;
-            //.DistinctBy(a => a.Name.ToString()); // ToString needed since SeStrings are different
-        }
-
-        public static Actions Instance
-        {
-            get
+            if (SingletonInstance == null)
             {
-                if (SingletonInstance == null)
+                lock (LockObject)
                 {
-                    lock (LockObject)
-                    {
-                        SingletonInstance ??= new Actions();
-                    }
+                    SingletonInstance ??= new Actions();
                 }
-                return SingletonInstance;
             }
+
+            return SingletonInstance;
         }
+    }
 
-        public List<uint> NonRepeatedIdList() => nonRepeatedActions.Select(a => a.RowId).Where(id => id != 0).ToList();
+    public string GetActionName(uint id)
+    {
+        return actionsSheetDictionary[id].Name.ToString();
+    }
 
-        public string GetActionName(uint id) => actionsSheet[id].Name.ToString();
+    public bool SameActionsByName(string name, uint aId)
+    {
+        return actionsSheetDictionary[aId].Name.ToString().ToLower().Contains(name.ToLower());
+    }
 
-        public LuminaAction GetAction(uint id) => actionsSheet[id];
+    public List<uint> NonRepeatedIdList()
+    {
+        return actionsSheet.Select(a => a.RowId).Where(id => id != 0).ToList();
+    }
 
-        public ushort GetActionIcon(uint id) => actionsSheet[id].Icon;
+    public LuminaAction GetAction(uint id)
+    {
+        return actionsSheetDictionary[id];
+    }
 
-        public List<uint> GetNonRepeatedActionsByName(string name, Jobs job) => nonRepeatedActions
-            .AsParallel()
-            .Where(a =>
-                a.Name.ToString().ToLower().Contains(name.ToLower())
-                && (a.ClassJobCategory.Value!.Name.ToString().Contains(job.ToString()) || job == Jobs.ANY)
-            )
-            .Select(a => a.RowId)
-            .Order()
-            .ToList();
+    public ushort GetActionIcon(uint id)
+    {
+        return actionsSheetDictionary[id].Icon;
+    }
 
-        public bool SameActionsByName(string name, uint aId) => actionsSheet[aId].Name.ToString().ToLower().Contains(name.ToLower());
+    public List<uint> GetNonRepeatedActionsByName(string name, Jobs job)
+    {
+        return actionsSheet
+               .AsParallel()
+               .Where(a =>
+                          a.Name.ToString().ToLower().Contains(name.ToLower())
+                          && (a.ClassJobCategory.Value!.Name.ToString().Contains(job.ToString()) || job == Jobs.ANY)
+               )
+               .Select(a => a.RowId)
+               .Order()
+               .ToList();
+    }
 
-        public static bool IsPvEAction(LuminaAction a) =>
-            a.RowId == 0 || // 0 is used as an catch-all action
-            ((a.ActionCategory.Row is 2 or 3 or 4) // GCD or Weaponskill or oGCD
-                && !a.IsPvP
-                && a.ClassJobLevel > 0 // not an old action
-                && a.ClassJobCategory.Row != 0 // not an old action
-            );
+    public static bool IsPvEAction(LuminaAction a)
+    {
+        return a.RowId == 0 ||                               // 0 is used as an catch-all action
+               (a.ActionCategory.Row is 2 or 3 or 4          // GCD or Weaponskill or oGCD
+                && a is { IsPvP: false, ClassJobLevel: > 0 } // not an old action
+                && a.ClassJobCategory.Row != 0               // not an old action
+               );
+    }
 
-        public static IDalamudTextureWrap GetTexture(string path)
+    public static IDalamudTextureWrap GetTexture(string path)
+    {
+        var data = OpenerCreator.DataManager.GetFile<TexFile>(path)!;
+        var pixels = new byte[data.Header.Width * data.Header.Height * 4];
+        for (var i = 0; i < data.Header.Width * data.Header.Height; i++)
         {
-            var data = OpenerCreator.DataManager.GetFile<Lumina.Data.Files.TexFile>(path)!;
-            var pixels = new byte[data.Header.Width * data.Header.Height * 4];
-            for (var i = 0; i < data.Header.Width * data.Header.Height; i++)
-            {
-                pixels[i * 4 + 0] = data.ImageData[i * 4 + 2];
-                pixels[i * 4 + 1] = data.ImageData[i * 4 + 1];
-                pixels[i * 4 + 2] = data.ImageData[i * 4 + 0];
-                pixels[i * 4 + 3] = data.ImageData[i * 4 + 3];
-            }
-            return OpenerCreator.PluginInterface.UiBuilder.LoadImageRaw(pixels, data.Header.Width, data.Header.Height, 4);
+            pixels[(i * 4) + 0] = data.ImageData[(i * 4) + 2];
+            pixels[(i * 4) + 1] = data.ImageData[(i * 4) + 1];
+            pixels[(i * 4) + 2] = data.ImageData[(i * 4) + 0];
+            pixels[(i * 4) + 3] = data.ImageData[(i * 4) + 3];
         }
 
-        public IDalamudTextureWrap GetIconTexture(uint id)
-        {
-            var icon = Actions.Instance.GetActionIcon(id).ToString("D6");
-            var path = $"ui/icon/{icon[0]}{icon[1]}{icon[2]}000/{icon}_hr1.tex";
-            return GetTexture(path);
-        }
+        return OpenerCreator.PluginInterface.UiBuilder.LoadImageRaw(pixels, data.Header.Width, data.Header.Height, 4);
+    }
+
+    public static IDalamudTextureWrap GetIconTexture(uint id)
+    {
+        var icon = Instance.GetActionIcon(id).ToString("D6");
+        var path = $"ui/icon/{icon[0]}{icon[1]}{icon[2]}000/{icon}_hr1.tex";
+        return GetTexture(path);
     }
 }

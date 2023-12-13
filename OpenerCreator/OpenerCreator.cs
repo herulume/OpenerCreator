@@ -5,47 +5,61 @@ using Dalamud.Plugin.Services;
 using OpenerCreator.Gui;
 using OpenerCreator.Hooks;
 
-namespace OpenerCreator
+namespace OpenerCreator;
+
+public sealed class OpenerCreator : IDalamudPlugin
 {
-    public sealed class OpenerCreator : IDalamudPlugin
+    private const string Command = "/ocrt";
+
+    public OpenerCreator()
     {
-        public string Name => "OpenerCreator";
-        private readonly string command = "/ocrt";
-        public static Configuration Config = null!;
-        private Gui.OpenerCreatorWindow OpenerCreatorGui { get; init; }
-        private OnUsedActionHook OnUsedHook { get; init; }
+        UsedHook = new UsedActionHook();
 
-        [PluginService][RequiredVersion("1.0")] public static DalamudPluginInterface PluginInterface { get; private set; } = null!;
-        [PluginService][RequiredVersion("1.0")] public static ICommandManager CommandManager { get; private set; } = null!;
-        [PluginService][RequiredVersion("1.0")] public static IChatGui ChatGui { get; private set; } = null!;
-        [PluginService][RequiredVersion("1.0")] public static IGameInteropProvider GameInteropProvider { get; private set; } = null!;
-        [PluginService][RequiredVersion("1.0")] public static IDataManager DataManager { get; private set; } = null!;
-        [PluginService][RequiredVersion("1.0")] public static IClientState ClientState { get; private set; } = null!;
-        [PluginService][RequiredVersion("1.0")] public static IGameGui GameUI { get; private set; } = null!;
-        [PluginService][RequiredVersion("1.0")] public static IPluginLog PluginLog { get; private set; } = null!;
+        OpenerCreatorGui = new OpenerCreatorWindow(UsedHook.StartRecording, UsedHook.StopRecording);
 
-        public OpenerCreator()
+        Config = Configuration.Load();
+
+        PluginInterface.UiBuilder.Draw += OpenerCreatorGui.Draw;
+        PluginInterface.UiBuilder.OpenConfigUi += () => OpenerCreatorGui.Enabled = true;
+
+        CommandManager.AddHandler(Command, new CommandInfo((_, _) => OpenerCreatorGui.Enabled = true)
         {
-            this.OnUsedHook = new OnUsedActionHook();
+            HelpMessage = "Create, save, and practice your openers."
+        });
+    }
 
-            OpenerCreatorGui = new OpenerCreatorWindow(this.OnUsedHook.StartRecording, this.OnUsedHook.StopRecording);
+    public static Configuration Config { get; set; } = null!;
+    private OpenerCreatorWindow OpenerCreatorGui { get; init; }
+    private UsedActionHook UsedHook { get; init; }
 
-            Config = Configuration.Load();
+    [PluginService]
+    [RequiredVersion("1.0")]
+    public static DalamudPluginInterface PluginInterface { get; private set; } = null!;
 
-            PluginInterface.UiBuilder.Draw += OpenerCreatorGui.Draw;
-            PluginInterface.UiBuilder.OpenConfigUi += () => OpenerCreatorGui.Enabled = true;
+    [PluginService]
+    [RequiredVersion("1.0")]
+    public static ICommandManager CommandManager { get; private set; } = null!;
 
-            CommandManager.AddHandler(command, new CommandInfo((string _, string _) => OpenerCreatorGui.Enabled = true)
-            {
-                HelpMessage = "Create, save, and practice your openers."
-            });
-        }
+    [PluginService]
+    [RequiredVersion("1.0")]
+    public static IGameInteropProvider GameInteropProvider { get; private set; } = null!;
 
-        public void Dispose()
-        {
-            CommandManager.RemoveHandler(command);
-            this.OnUsedHook.Dispose();
-            OpenerCreatorGui.Dispose();
-        }
+    [PluginService]
+    [RequiredVersion("1.0")]
+    public static IDataManager DataManager { get; private set; } = null!;
+
+    [PluginService]
+    [RequiredVersion("1.0")]
+    public static IClientState ClientState { get; private set; } = null!;
+
+    [PluginService]
+    [RequiredVersion("1.0")]
+    public static IPluginLog PluginLog { get; private set; } = null!;
+
+    public void Dispose()
+    {
+        CommandManager.RemoveHandler(Command);
+        UsedHook.Dispose();
+        OpenerCreatorGui.Dispose();
     }
 }
