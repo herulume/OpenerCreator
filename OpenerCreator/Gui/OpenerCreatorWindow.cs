@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
+using Dalamud;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Interface.Internal;
 using Dalamud.Utility;
@@ -15,30 +16,29 @@ namespace OpenerCreator.Gui;
 
 public class OpenerCreatorWindow : IDisposable
 {
-    public bool Enabled;
+    private static readonly Vector2 IconSize = new(32);
+    private static readonly Vector2 CountdownNumberSize = new(240, 320);
+    private readonly IDalamudTextureWrap countdownGo;
+    private readonly IDalamudTextureWrap countdownNumbers;
 
-    private string name;
-    private string search;
-    private Jobs jobFilter;
-    private Stopwatch? countdownStart;
-    private bool recording;
-    private List<string> feedback;
-    private int? actionDnd;
-    private List<uint> actions;
-    private List<uint> filteredActions;
-    private JobCategory jobCategoryFilter = JobCategory.None;
-    private List<Tuple<Jobs, List<string>>> openers;
-    private readonly HashSet<int> wrongActions;
+    private readonly Dictionary<uint, IDalamudTextureWrap> iconCache;
 
     private readonly Action<int, Action<Feedback>, Action<int>> startRecording;
     private readonly Action stopRecording;
+    private readonly HashSet<int> wrongActions;
+    private int? actionDnd;
+    private List<uint> actions;
+    private Stopwatch? countdownStart;
+    public bool Enabled;
+    private List<string> feedback;
+    private List<uint> filteredActions;
+    private JobCategory jobCategoryFilter = JobCategory.None;
+    private Jobs jobFilter;
 
-    private readonly Dictionary<uint, IDalamudTextureWrap> iconCache;
-    private readonly IDalamudTextureWrap countdownNumbers;
-    private readonly IDalamudTextureWrap countdownGo;
-
-    private static readonly Vector2 IconSize = new(32);
-    private static readonly Vector2 CountdownNumberSize = new(240, 320);
+    private string name;
+    private List<Tuple<Jobs, List<string>>> openers;
+    private bool recording;
+    private string search;
 
     public OpenerCreatorWindow(Action<int, Action<Feedback>, Action<int>> startRecording, Action stopRecording)
     {
@@ -61,9 +61,9 @@ public class OpenerCreatorWindow : IDisposable
         countdownNumbers = Actions.GetTexture("ui/uld/ScreenInfo_CountDown_hr1.tex");
         var languageCode = OpenerCreator.DataManager.Language switch
         {
-            Dalamud.ClientLanguage.French => "fr",
-            Dalamud.ClientLanguage.German => "de",
-            Dalamud.ClientLanguage.Japanese => "ja",
+            ClientLanguage.French => "fr",
+            ClientLanguage.German => "de",
+            ClientLanguage.Japanese => "ja",
             _ => "en"
         };
         countdownGo = Actions.GetTexture($"ui/icon/121000/{languageCode}/121841_hr1.tex");
@@ -102,9 +102,14 @@ public class OpenerCreatorWindow : IDisposable
     {
         var spacing = ImGui.GetStyle().ItemSpacing;
         var padding = ImGui.GetStyle().FramePadding;
-        var iconsPerLine = (int)Math.Floor((ImGui.GetContentRegionAvail().X - (padding.X * 2.0) + spacing.X) / (IconSize.X + spacing.X));
+        var iconsPerLine = (int)Math.Floor((ImGui.GetContentRegionAvail().X - (padding.X * 2.0) + spacing.X) /
+                                           (IconSize.X + spacing.X));
         var lines = (float)Math.Max(Math.Ceiling(actions.Count / (float)iconsPerLine), 1);
-        ImGui.BeginChildFrame(2426787, new Vector2(ImGui.GetContentRegionAvail().X, (lines * (IconSize.Y + spacing.Y)) - spacing.Y + (padding.Y * 2)), ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        ImGui.BeginChildFrame(
+            2426787,
+            new Vector2(ImGui.GetContentRegionAvail().X,
+                        (lines * (IconSize.Y + spacing.Y)) - spacing.Y + (padding.Y * 2)),
+            ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
 
         int? dndTarget = null;
         if (actionDnd != null)
@@ -127,7 +132,8 @@ public class OpenerCreatorWindow : IDisposable
 
             if ((dndTarget <= actionDnd && dndTarget == i) || (dndTarget > actionDnd && dndTarget == i - 1))
             {
-                ImGui.Image(GetIcon(actions[actionDnd!.Value]), IconSize, Vector2.Zero, Vector2.One, new Vector4(255, 255, 255, 100));
+                ImGui.Image(GetIcon(actions[actionDnd!.Value]), IconSize, Vector2.Zero, Vector2.One,
+                            new Vector4(255, 255, 255, 100));
 
                 if (actionDnd != i)
                 {
@@ -139,7 +145,7 @@ public class OpenerCreatorWindow : IDisposable
 
             if (actionDnd != i && i < actions.Count)
             {
-                var color = this.wrongActions.Contains(i) ? new Vector4(255, 0, 0, 255) : new Vector4(255, 255, 255, 255);
+                var color = wrongActions.Contains(i) ? new Vector4(255, 0, 0, 255) : new Vector4(255, 255, 255, 255);
                 ImGui.Image(GetIcon(actions[i]), IconSize, Vector2.Zero, Vector2.One, color);
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
                     actionDnd = i;
@@ -205,7 +211,9 @@ public class OpenerCreatorWindow : IDisposable
         ImGui.EndTabItem();
     }
 
-    private void DrawOpeners(List<Tuple<Jobs, List<string>>> openers, string prefix, Func<string, Jobs, List<uint>> getOpener, bool delete = false)
+    private void DrawOpeners(
+        List<Tuple<Jobs, List<string>>> openers, string prefix, Func<string, Jobs, List<uint>> getOpener,
+        bool delete = false)
     {
         if (!ImGui.BeginTabItem($"{prefix} Openers"))
             return;
@@ -213,14 +221,12 @@ public class OpenerCreatorWindow : IDisposable
         DrawJobCategoryFilters();
 
         foreach (var openerJob in openers)
-        {
-            if (JobsExtensions.FilterBy(this.jobCategoryFilter, openerJob.Item1))
+            if (JobsExtensions.FilterBy(jobCategoryFilter, openerJob.Item1))
             {
                 CollapsingHeader($"{prefix} {openerJob.Item1} Openers", () =>
                 {
                     foreach (var opener in openerJob.Item2)
                     {
-
                         ImGui.Text(opener);
                         ImGui.SameLine();
                         if (ImGui.Button($"Load##{prefix}#{opener}#{openerJob.Item1}"))
@@ -229,6 +235,7 @@ public class OpenerCreatorWindow : IDisposable
                             actions = OpenerManager.Instance.GetDefaultOpener(opener, openerJob.Item1);
                             OpenerManager.Instance.Loaded = actions;
                         }
+
                         if (delete)
                         {
                             ImGui.SameLine();
@@ -242,7 +249,7 @@ public class OpenerCreatorWindow : IDisposable
                     }
                 });
             }
-        }
+
         ImGui.EndTabItem();
     }
 
@@ -251,7 +258,8 @@ public class OpenerCreatorWindow : IDisposable
         if (!ImGui.BeginTabItem("Creator"))
             return;
 
-        ImGui.BeginChild("allactions", new Vector2(0, ImGui.GetContentRegionAvail().Y - ImGui.GetStyle().WindowPadding.Y));
+        ImGui.BeginChild("allactions",
+                         new Vector2(0, ImGui.GetContentRegionAvail().Y - ImGui.GetStyle().WindowPadding.Y));
 
 
         // Save opener
@@ -260,36 +268,34 @@ public class OpenerCreatorWindow : IDisposable
             OpenerManager.Instance.AddOpener(name, jobFilter, actions);
             OpenerManager.Instance.SaveOpeners();
         }
+
         ImGui.SameLine();
         ImGui.InputText("Opener name", ref name, 32);
 
         //  Filter by job
-        if (ImGui.BeginCombo($"Job Filter", jobFilter.ToString()))
+        if (ImGui.BeginCombo("Job Filter", jobFilter.ToString()))
         {
             foreach (Jobs job in Enum.GetValues(typeof(Jobs)))
-            {
                 if (ImGui.Selectable(job.ToString()))
                 {
                     jobFilter = job;
                     filteredActions = Actions.Instance.GetNonRepeatedActionsByName(search, jobFilter);
                 }
-            }
+
             ImGui.EndCombo();
         }
+
         // Search bar
         if (ImGui.InputText("Search", ref search, 64))
-        {
-            filteredActions = search.Length > 0 ? Actions.Instance.GetNonRepeatedActionsByName(search, jobFilter) : Actions.Instance.NonRepeatedIdList();
-        }
+            filteredActions = search.Length > 0
+                                  ? Actions.Instance.GetNonRepeatedActionsByName(search, jobFilter)
+                                  : Actions.Instance.NonRepeatedIdList();
 
         ImGui.Text($"{filteredActions.Count} Results");
         ImGui.SameLine();
         DrawClear();
         ImGui.SameLine();
-        if (ImGui.Button("Add catch-all action"))
-        {
-            actions.Add(0);
-        }
+        if (ImGui.Button("Add catch-all action")) actions.Add(0);
 
         for (var i = 0; i < Math.Min(20, filteredActions.Count); i++)
         {
@@ -324,18 +330,18 @@ public class OpenerCreatorWindow : IDisposable
 
         if (ImGui.Button("Start Recording"))
         {
-            this.feedback.Clear();
-            this.wrongActions.Clear();
-            this.recording = true;
-            this.countdownStart = Stopwatch.StartNew();
+            feedback.Clear();
+            wrongActions.Clear();
+            recording = true;
+            countdownStart = Stopwatch.StartNew();
             startRecording(OpenerCreator.Config.CountdownTime, AddFeedback, WrongAction);
         }
 
         ImGui.SameLine();
         if (ImGui.Button("Stop Recording"))
         {
-            this.recording = false;
-            this.countdownStart = null;
+            recording = false;
+            countdownStart = null;
             stopRecording();
         }
 
@@ -345,10 +351,7 @@ public class OpenerCreatorWindow : IDisposable
             ImGui.Text("RECORDING");
         }
 
-        foreach (var line in feedback)
-        {
-            ImGui.Text(line);
-        }
+        foreach (var line in feedback) ImGui.Text(line);
 
         ImGui.EndChild();
         ImGui.EndTabItem();
@@ -356,11 +359,12 @@ public class OpenerCreatorWindow : IDisposable
 
     private void DrawCountdown()
     {
-        if (countdownStart == null || OpenerCreator.ClientState.LocalPlayer!.StatusFlags.ToString().Contains(StatusFlags.InCombat.ToString()))
+        if (countdownStart == null || OpenerCreator.ClientState.LocalPlayer!.StatusFlags.ToString()
+                                                   .Contains(StatusFlags.InCombat.ToString()))
             return;
 
         var drawlist = ImGui.GetForegroundDrawList();
-        var timer = OpenerCreator.Config.CountdownTime - countdownStart.ElapsedMilliseconds / 1000.0f;
+        var timer = OpenerCreator.Config.CountdownTime - (countdownStart.ElapsedMilliseconds / 1000.0f);
         var ceil = (float)Math.Ceiling(timer);
         const float uspacing = 1.0f / 6.0f;
 
@@ -371,7 +375,7 @@ public class OpenerCreatorWindow : IDisposable
             _ => ceil
         };
 
-        var anim = 1.0f - Math.Clamp((ceil - timer) - 0.5f, 0.0f, 1.0f);
+        var anim = 1.0f - Math.Clamp(ceil - timer - 0.5f, 0.0f, 1.0f);
         var color = 0x00FFFFFF + ((uint)(anim * 255) << 24);
 
         if (timer < -2)
@@ -384,17 +388,27 @@ public class OpenerCreatorWindow : IDisposable
         switch (timer)
         {
             case <= 0:
-                drawlist.AddImage(countdownGo.ImGuiHandle, center - (countdownGo.Size / 2), center + (countdownGo.Size / 2), Vector2.Zero, Vector2.One, color);
+                drawlist.AddImage(countdownGo.ImGuiHandle, center - (countdownGo.Size / 2),
+                                  center + (countdownGo.Size / 2), Vector2.Zero, Vector2.One, color);
                 break;
             case <= 5:
-                drawlist.AddImage(countdownNumbers.ImGuiHandle, center - (CountdownNumberSize / 2), center + (CountdownNumberSize / 2), new Vector2(ceil * uspacing, 0.0f), new Vector2((ceil * uspacing) + uspacing, 1.0f), color);
+                drawlist.AddImage(countdownNumbers.ImGuiHandle, center - (CountdownNumberSize / 2),
+                                  center + (CountdownNumberSize / 2), new Vector2(ceil * uspacing, 0.0f),
+                                  new Vector2((ceil * uspacing) + uspacing, 1.0f), color);
                 break;
             default:
             {
                 var dig1 = (int)Math.Floor(ceil / 10.0f);
                 var dig2 = ceil % 10;
-                drawlist.AddImage(countdownNumbers.ImGuiHandle, center - new Vector2(CountdownNumberSize.X, CountdownNumberSize.Y / 2), center + new Vector2(0.0f, CountdownNumberSize.Y / 2), new Vector2(dig1 * uspacing, 0.0f), new Vector2((dig1 * uspacing) + uspacing, 1.0f), color);
-                drawlist.AddImage(countdownNumbers.ImGuiHandle, center - new Vector2(0.0f, CountdownNumberSize.Y / 2), center + new Vector2(CountdownNumberSize.X, CountdownNumberSize.Y / 2), new Vector2(dig2 * uspacing, 0.0f), new Vector2((dig2 * uspacing) + uspacing, 1.0f), color);
+                drawlist.AddImage(countdownNumbers.ImGuiHandle,
+                                  center - new Vector2(CountdownNumberSize.X, CountdownNumberSize.Y / 2),
+                                  center + new Vector2(0.0f, CountdownNumberSize.Y / 2),
+                                  new Vector2(dig1 * uspacing, 0.0f), new Vector2((dig1 * uspacing) + uspacing, 1.0f),
+                                  color);
+                drawlist.AddImage(countdownNumbers.ImGuiHandle, center - new Vector2(0.0f, CountdownNumberSize.Y / 2),
+                                  center + new Vector2(CountdownNumberSize.X, CountdownNumberSize.Y / 2),
+                                  new Vector2(dig2 * uspacing, 0.0f), new Vector2((dig2 * uspacing) + uspacing, 1.0f),
+                                  color);
                 break;
             }
         }
@@ -425,23 +439,20 @@ public class OpenerCreatorWindow : IDisposable
 
         void DrawJobCategoryToggle(string label, JobCategory jobCategory)
         {
-            if (ImGui.Button(label))
-            {
-                jobCategoryFilter = JobsExtensions.Toggle(jobCategoryFilter, jobCategory);
-            }
+            if (ImGui.Button(label)) jobCategoryFilter = JobsExtensions.Toggle(jobCategoryFilter, jobCategory);
         }
     }
 
     private void WrongAction(int i)
     {
-        this.wrongActions.Add(i);
+        wrongActions.Add(i);
     }
 
     public void AddFeedback(Feedback f)
     {
-        this.countdownStart = null;
-        this.recording = false;
-        this.feedback = f.GetMessages();
+        countdownStart = null;
+        recording = false;
+        feedback = f.GetMessages();
     }
 
     private nint GetIcon(uint id)
@@ -453,9 +464,6 @@ public class OpenerCreatorWindow : IDisposable
 
     private static void CollapsingHeader(string label, Action action)
     {
-        if (ImGui.CollapsingHeader(label, ImGuiTreeNodeFlags.DefaultOpen))
-        {
-            action();
-        }
+        if (ImGui.CollapsingHeader(label, ImGuiTreeNodeFlags.DefaultOpen)) action();
     }
 }

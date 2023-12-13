@@ -8,102 +8,102 @@ using OpenerCreator.Managers;
 using LuminaAction = Lumina.Excel.GeneratedSheets.Action;
 
 
-namespace OpenerCreator.Hooks
+namespace OpenerCreator.Hooks;
+
+public class UsedActionHook : IDisposable
 {
-    public unsafe class UsedActionHook : IDisposable
+    private static readonly int MaxItemCount = 50;
+
+    private readonly ExcelSheet<LuminaAction>? sheet;
+    private readonly List<uint> used = new(MaxItemCount);
+    private readonly Hook<UsedActionDelegate>? usedActionHook;
+
+    private int nactions;
+    private Action<Feedback> provideFeedback;
+    private Action<int> wrongAction;
+
+    public UsedActionHook()
     {
-        private delegate void UsedActionDelegate(uint sourceId, IntPtr sourceCharacter, IntPtr pos, IntPtr effectHeader, IntPtr effectArray, IntPtr effectTrail);
-        private readonly Hook<UsedActionDelegate>? usedActionHook;
+        sheet = OpenerCreator.DataManager.GetExcelSheet<LuminaAction>();
 
-        private readonly ExcelSheet<LuminaAction>? sheet;
+        // credits to Tischel for the sig
+        // https://github.com/Tischel/ActionTimeline/blob/master/ActionTimeline/Helpers/TimelineManager.cs
+        usedActionHook = OpenerCreator.GameInteropProvider.HookFromSignature<UsedActionDelegate>(
+            "40 55 53 57 41 54 41 55 41 56 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 70",
+            DetourUsedAction
+        );
+        nactions = 0;
+        provideFeedback = _ => { };
+        wrongAction = _ => { };
+    }
 
-        private int nactions;
-        private static readonly int MaxItemCount = 50;
-        private readonly List<uint> used = new(MaxItemCount);
-        private Action<Feedback> provideFeedback;
-        private Action<int> wrongAction;
+    public void Dispose()
+    {
+        usedActionHook?.Disable();
+        usedActionHook?.Dispose();
+        GC.SuppressFinalize(this);
+    }
 
-        public UsedActionHook()
+    public void StartRecording(int cd, Action<Feedback> provideFeedbackAction, Action<int> wrongActionAction)
+    {
+        if (usedActionHook!.IsEnabled)
+            return;
+
+        provideFeedback = provideFeedbackAction;
+        wrongAction = wrongActionAction;
+        usedActionHook?.Enable();
+        nactions = OpenerManager.Instance.Loaded.Count;
+    }
+
+    public void StopRecording()
+    {
+        if (!usedActionHook!.IsEnabled)
+            return;
+
+        usedActionHook?.Disable();
+        nactions = 0;
+        used.Clear();
+
+        var feedback = new Feedback();
+        feedback.AddMessage(Feedback.MessageType.Info, "No opener defined.");
+        provideFeedback(feedback);
+    }
+
+    private void Compare()
+    {
+        if (!usedActionHook!.IsEnabled)
+            return;
+
+        usedActionHook?.Disable();
+        nactions = 0;
+        OpenerManager.Instance.Compare(used, provideFeedback, wrongAction);
+        used.Clear();
+    }
+
+    private void DetourUsedAction(
+        uint sourceId, IntPtr sourceCharacter, IntPtr pos, IntPtr effectHeader, IntPtr effectArray, IntPtr effectTrail)
+    {
+        usedActionHook?.Original(sourceId, sourceCharacter, pos, effectHeader, effectArray, effectTrail);
+
+        var player = OpenerCreator.ClientState.LocalPlayer;
+        if (player == null || sourceId != player.ObjectId) return;
+
+        var actionId = (uint)Marshal.ReadInt32(effectHeader, 0x8);
+        var action = sheet!.GetRow(actionId);
+        if (action != null && Actions.IsPvEAction(action))
         {
-            sheet = OpenerCreator.DataManager.GetExcelSheet<LuminaAction>();
-
-            // credits to Tischel for the sig
-            // https://github.com/Tischel/ActionTimeline/blob/master/ActionTimeline/Helpers/TimelineManager.cs
-            this.usedActionHook = OpenerCreator.GameInteropProvider.HookFromSignature<UsedActionDelegate>(
-                "40 55 53 57 41 54 41 55 41 56 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 70",
-                this.DetourUsedAction
-                );
-            this.nactions = 0;
-            this.provideFeedback = (_) => { };
-            this.wrongAction = (_) => { };
-        }
-
-        public void Dispose()
-        {
-            this.usedActionHook?.Disable();
-            this.usedActionHook?.Dispose();
-            GC.SuppressFinalize(this);
-        }
-
-        public void StartRecording(int cd, Action<Feedback> provideFeedbackAction, Action<int> wrongActionAction)
-        {
-            if (this.usedActionHook!.IsEnabled)
-                return;
-
-            this.provideFeedback = provideFeedbackAction;
-            this.wrongAction = wrongActionAction;
-            this.usedActionHook?.Enable();
-            this.nactions = OpenerManager.Instance.Loaded.Count;
-        }
-
-        public void StopRecording()
-        {
-            if (!this.usedActionHook!.IsEnabled)
-                return;
-
-            this.usedActionHook?.Disable();
-            this.nactions = 0;
-            used.Clear();
-
-            var feedback = new Feedback();
-            feedback.AddMessage(Feedback.MessageType.Info, "No opener defined.");
-            provideFeedback(feedback);
-        }
-
-        private void Compare()
-        {
-            if (!this.usedActionHook!.IsEnabled)
-                return;
-
-            this.usedActionHook?.Disable();
-            this.nactions = 0;
-            OpenerManager.Instance.Compare(used, provideFeedback, wrongAction);
-            used.Clear();
-        }
-
-        private void DetourUsedAction(uint sourceId, IntPtr sourceCharacter, IntPtr pos, IntPtr effectHeader, IntPtr effectArray, IntPtr effectTrail)
-        {
-            this.usedActionHook?.Original(sourceId, sourceCharacter, pos, effectHeader, effectArray, effectTrail);
-
-            var player = OpenerCreator.ClientState.LocalPlayer;
-            if (player == null || sourceId != player.ObjectId) { return; }
-
-            var actionId = (uint)Marshal.ReadInt32(effectHeader, 0x8);
-            var action = sheet!.GetRow(actionId);
-            if (action != null && Actions.IsPvEAction(action))
+            if (nactions == 0) // opener not defined
             {
-                if (nactions == 0) // opener not defined
-                {
-                    StopRecording();
-                    return;
-                }
-                used.Add(actionId);
-                nactions--;
-                if (this.nactions <= 0)
-                {
-                    this.Compare();
-                }
+                StopRecording();
+                return;
             }
+
+            used.Add(actionId);
+            nactions--;
+            if (nactions <= 0) Compare();
         }
     }
+
+    private delegate void UsedActionDelegate(
+        uint sourceId, IntPtr sourceCharacter, IntPtr pos, IntPtr effectHeader, IntPtr effectArray, IntPtr effectTrail);
 }

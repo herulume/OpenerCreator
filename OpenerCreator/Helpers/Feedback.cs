@@ -1,25 +1,36 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace OpenerCreator.Helpers
+namespace OpenerCreator.Helpers;
+
+public class Feedback
 {
-    public class Feedback
+    public enum MessageType
     {
-        public enum MessageType
-        {
-            Success,
-            Info,
-            Error,
-        }
+        Success,
+        Info,
+        Error
+    }
 
-        private readonly List<(MessageType type, string message)> messages = [];
+    private readonly List<(MessageType type, string message)> messages = [];
 
-        public void AddMessage(MessageType type, string message) => messages.Add((type, message));
+    public void AddMessage(MessageType type, string message)
+    {
+        messages.Add((type, message));
+    }
 
-        public List<string> GetMessages() => messages.Select(ToMessage).ToList();
+    public List<string> GetMessages()
+    {
+        return messages.Select(ToMessage).ToList();
+    }
 
-        public List<(MessageType, string)> GetList() => messages;
+    public List<(MessageType, string)> GetList()
+    {
+        return messages;
+    }
 
-        public static string ToMessage((MessageType, string) m) => $"{m.Item1}: {m.Item2}";
+    public static string ToMessage((MessageType, string) m)
+    {
+        return $"{m.Item1}: {m.Item2}";
     }
 }
