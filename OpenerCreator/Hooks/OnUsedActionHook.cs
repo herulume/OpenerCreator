@@ -10,7 +10,7 @@ using LuminaAction = Lumina.Excel.GeneratedSheets.Action;
 
 namespace OpenerCreator.Hooks
 {
-    public unsafe class OnUsedActionHook : IDisposable
+    public unsafe class UsedActionHook : IDisposable
     {
         private delegate void UsedActionDelegate(uint sourceId, IntPtr sourceCharacter, IntPtr pos, IntPtr effectHeader, IntPtr effectArray, IntPtr effectTrail);
         private readonly Hook<UsedActionDelegate>? usedActionHook;
@@ -23,7 +23,7 @@ namespace OpenerCreator.Hooks
         private Action<Feedback> provideFeedback;
         private Action<int> wrongAction;
 
-        public OnUsedActionHook()
+        public UsedActionHook()
         {
             sheet = OpenerCreator.DataManager.GetExcelSheet<LuminaAction>();
 
@@ -45,13 +45,13 @@ namespace OpenerCreator.Hooks
             GC.SuppressFinalize(this);
         }
 
-        public void StartRecording(int cd, Action<Feedback> provideFeedback, Action<int> wrongAction)
+        public void StartRecording(int cd, Action<Feedback> provideFeedbackAction, Action<int> wrongActionAction)
         {
             if (this.usedActionHook!.IsEnabled)
                 return;
 
-            this.provideFeedback = provideFeedback;
-            this.wrongAction = wrongAction;
+            this.provideFeedback = provideFeedbackAction;
+            this.wrongAction = wrongActionAction;
             this.usedActionHook?.Enable();
             this.nactions = OpenerManager.Instance.Loaded.Count;
         }
@@ -102,7 +102,6 @@ namespace OpenerCreator.Hooks
                 if (this.nactions <= 0)
                 {
                     this.Compare();
-                    return;
                 }
             }
         }

@@ -33,12 +33,12 @@ public class OpenerCreatorWindow : IDisposable
     private readonly Action<int, Action<Feedback>, Action<int>> startRecording;
     private readonly Action stopRecording;
 
-    private Dictionary<uint, IDalamudTextureWrap> iconCache;
-    private IDalamudTextureWrap countdownNumbers;
-    private IDalamudTextureWrap countdownGo;
+    private readonly Dictionary<uint, IDalamudTextureWrap> iconCache;
+    private readonly IDalamudTextureWrap countdownNumbers;
+    private readonly IDalamudTextureWrap countdownGo;
 
-    private static Vector2 IconSize = new(32);
-    private static Vector2 CountdownNumberSize = new(240, 320);
+    private static readonly Vector2 IconSize = new(32);
+    private static readonly Vector2 CountdownNumberSize = new(240, 320);
 
     public OpenerCreatorWindow(Action<int, Action<Feedback>, Action<int>> startRecording, Action stopRecording)
     {
@@ -48,16 +48,16 @@ public class OpenerCreatorWindow : IDisposable
         search = "";
         jobFilter = Jobs.ANY;
         recording = false;
-        feedback = new();
-        actions = new();
+        feedback = [];
+        actions = [];
         openers = OpenerManager.Instance.GetNames();
         filteredActions = Actions.Instance.NonRepeatedIdList();
-        wrongActions = new();
+        wrongActions = [];
 
         this.startRecording = startRecording;
         this.stopRecording = stopRecording;
 
-        iconCache = new();
+        iconCache = new Dictionary<uint, IDalamudTextureWrap>();
         countdownNumbers = Actions.GetTexture("ui/uld/ScreenInfo_CountDown_hr1.tex");
         var languageCode = OpenerCreator.DataManager.Language switch
         {
@@ -102,9 +102,9 @@ public class OpenerCreatorWindow : IDisposable
     {
         var spacing = ImGui.GetStyle().ItemSpacing;
         var padding = ImGui.GetStyle().FramePadding;
-        var iconsPerLine = (int)Math.Floor((ImGui.GetContentRegionAvail().X - padding.X * 2.0 + spacing.X) / (IconSize.X + spacing.X));
+        var iconsPerLine = (int)Math.Floor((ImGui.GetContentRegionAvail().X - (padding.X * 2.0) + spacing.X) / (IconSize.X + spacing.X));
         var lines = (float)Math.Max(Math.Ceiling(actions.Count / (float)iconsPerLine), 1);
-        ImGui.BeginChildFrame(2426787, new Vector2(ImGui.GetContentRegionAvail().X, lines * (IconSize.Y + spacing.Y) - spacing.Y + padding.Y * 2), ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        ImGui.BeginChildFrame(2426787, new Vector2(ImGui.GetContentRegionAvail().X, (lines * (IconSize.Y + spacing.Y)) - spacing.Y + (padding.Y * 2)), ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
 
         int? dndTarget = null;
         if (actionDnd != null)
@@ -112,7 +112,7 @@ public class OpenerCreatorWindow : IDisposable
             var pos = ImGui.GetMousePos() - ImGui.GetCursorScreenPos();
             var x = (int)Math.Floor(pos.X / (IconSize.X + spacing.X));
             var y = (int)Math.Floor(pos.Y / (IconSize.Y + spacing.Y));
-            dndTarget = Math.Clamp(y * iconsPerLine + x, 0, actions.Count - 1);
+            dndTarget = Math.Clamp((y * iconsPerLine) + x, 0, actions.Count - 1);
         }
 
         int? delete = null;
@@ -214,7 +214,7 @@ public class OpenerCreatorWindow : IDisposable
 
         foreach (var openerJob in openers)
         {
-            if (JobsExtensions.filterBy(this.jobCategoryFilter, openerJob.Item1))
+            if (JobsExtensions.FilterBy(this.jobCategoryFilter, openerJob.Item1))
             {
                 CollapsingHeader($"{prefix} {openerJob.Item1} Openers", () =>
                 {
@@ -279,10 +279,7 @@ public class OpenerCreatorWindow : IDisposable
         // Search bar
         if (ImGui.InputText("Search", ref search, 64))
         {
-            if (search.Length > 0)
-                filteredActions = Actions.Instance.GetNonRepeatedActionsByName(search, jobFilter);
-            else
-                filteredActions = Actions.Instance.NonRepeatedIdList();
+            filteredActions = search.Length > 0 ? Actions.Instance.GetNonRepeatedActionsByName(search, jobFilter) : Actions.Instance.NonRepeatedIdList();
         }
 
         ImGui.Text($"{filteredActions.Count} Results");
@@ -365,12 +362,14 @@ public class OpenerCreatorWindow : IDisposable
         var drawlist = ImGui.GetForegroundDrawList();
         var timer = OpenerCreator.Config.CountdownTime - countdownStart.ElapsedMilliseconds / 1000.0f;
         var ceil = (float)Math.Ceiling(timer);
-        var uspacing = 1.0f / 6.0f;
+        const float uspacing = 1.0f / 6.0f;
 
-        if (timer <= 0)
-            ceil = 0;
-        if (timer > 5)
-            ceil = (int)Math.Ceiling(timer / 5.0) * 5.0f;
+        ceil = timer switch
+        {
+            <= 0 => 0,
+            > 5 => (int)Math.Ceiling(timer / 5.0) * 5.0f,
+            _ => ceil
+        };
 
         var anim = 1.0f - Math.Clamp((ceil - timer) - 0.5f, 0.0f, 1.0f);
         var color = 0x00FFFFFF + ((uint)(anim * 255) << 24);
@@ -382,16 +381,22 @@ public class OpenerCreatorWindow : IDisposable
         }
 
         var center = ImGui.GetMainViewport().GetCenter();
-        if (timer <= 0)
-            drawlist.AddImage(countdownGo.ImGuiHandle, center - countdownGo.Size / 2, center + countdownGo.Size / 2, Vector2.Zero, Vector2.One, color);
-        else if (timer <= 5)
-            drawlist.AddImage(countdownNumbers.ImGuiHandle, center - CountdownNumberSize / 2, center + CountdownNumberSize / 2, new(ceil * uspacing, 0.0f), new(ceil * uspacing + uspacing, 1.0f), color);
-        else
+        switch (timer)
         {
-            var dig1 = (int)Math.Floor(ceil / 10.0f);
-            var dig2 = ceil % 10;
-            drawlist.AddImage(countdownNumbers.ImGuiHandle, center - new Vector2(CountdownNumberSize.X, CountdownNumberSize.Y / 2), center + new Vector2(0.0f, CountdownNumberSize.Y / 2), new(dig1 * uspacing, 0.0f), new(dig1 * uspacing + uspacing, 1.0f), color);
-            drawlist.AddImage(countdownNumbers.ImGuiHandle, center - new Vector2(0.0f, CountdownNumberSize.Y / 2), center + new Vector2(CountdownNumberSize.X, CountdownNumberSize.Y / 2), new(dig2 * uspacing, 0.0f), new(dig2 * uspacing + uspacing, 1.0f), color);
+            case <= 0:
+                drawlist.AddImage(countdownGo.ImGuiHandle, center - (countdownGo.Size / 2), center + (countdownGo.Size / 2), Vector2.Zero, Vector2.One, color);
+                break;
+            case <= 5:
+                drawlist.AddImage(countdownNumbers.ImGuiHandle, center - (CountdownNumberSize / 2), center + (CountdownNumberSize / 2), new Vector2(ceil * uspacing, 0.0f), new Vector2((ceil * uspacing) + uspacing, 1.0f), color);
+                break;
+            default:
+            {
+                var dig1 = (int)Math.Floor(ceil / 10.0f);
+                var dig2 = ceil % 10;
+                drawlist.AddImage(countdownNumbers.ImGuiHandle, center - new Vector2(CountdownNumberSize.X, CountdownNumberSize.Y / 2), center + new Vector2(0.0f, CountdownNumberSize.Y / 2), new Vector2(dig1 * uspacing, 0.0f), new Vector2((dig1 * uspacing) + uspacing, 1.0f), color);
+                drawlist.AddImage(countdownNumbers.ImGuiHandle, center - new Vector2(0.0f, CountdownNumberSize.Y / 2), center + new Vector2(CountdownNumberSize.X, CountdownNumberSize.Y / 2), new Vector2(dig2 * uspacing, 0.0f), new Vector2((dig2 * uspacing) + uspacing, 1.0f), color);
+                break;
+            }
         }
     }
 
@@ -407,14 +412,6 @@ public class OpenerCreatorWindow : IDisposable
 
     private void DrawJobCategoryFilters()
     {
-        void DrawJobCategoryToggle(string label, JobCategory jobCategory)
-        {
-            if (ImGui.Button(label))
-            {
-                jobCategoryFilter = JobsExtensions.toggle(jobCategoryFilter, jobCategory);
-            }
-        }
-
         DrawJobCategoryToggle("Tanks", JobCategory.Tank);
         ImGui.SameLine();
         DrawJobCategoryToggle("Healers", JobCategory.Healer);
@@ -424,6 +421,15 @@ public class OpenerCreatorWindow : IDisposable
         DrawJobCategoryToggle("Physical Ranged", JobCategory.PhysicalRanged);
         ImGui.SameLine();
         DrawJobCategoryToggle("Casters", JobCategory.MagicalRanged);
+        return;
+
+        void DrawJobCategoryToggle(string label, JobCategory jobCategory)
+        {
+            if (ImGui.Button(label))
+            {
+                jobCategoryFilter = JobsExtensions.Toggle(jobCategoryFilter, jobCategory);
+            }
+        }
     }
 
     private void WrongAction(int i)
@@ -431,17 +437,17 @@ public class OpenerCreatorWindow : IDisposable
         this.wrongActions.Add(i);
     }
 
-    public void AddFeedback(Feedback feedback)
+    public void AddFeedback(Feedback f)
     {
         this.countdownStart = null;
         this.recording = false;
-        this.feedback = feedback.GetMessages();
+        this.feedback = f.GetMessages();
     }
 
     private nint GetIcon(uint id)
     {
         if (!iconCache.ContainsKey(id))
-            iconCache[id] = Actions.Instance.GetIconTexture(id);
+            iconCache[id] = Actions.GetIconTexture(id);
         return iconCache[id].ImGuiHandle;
     }
 

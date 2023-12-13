@@ -7,31 +7,20 @@ using OpenerCreator.Helpers;
 
 namespace OpenerCreator.Managers
 {
-    public class OpenerManager
+    public class OpenerManager(IActionManager actions)
     {
         private const uint CatchAllAction = 0;
         private static OpenerManager? SingletonInstance;
         private static readonly object LockObject = new();
-        private readonly IActionManager actions;
-        public List<uint> Loaded { get; set; } = new List<uint>();
-        private readonly Dictionary<Jobs, Dictionary<string, List<uint>>> openers;
-        private readonly Dictionary<Jobs, Dictionary<string, List<uint>>> defaultOpeners;
-        private string openersFile { get; init; }
-
-        // Just for testing
-        // need a better approach
-        public OpenerManager(IActionManager actions)
-        {
-            this.actions = actions;
-            this.openersFile = "empty";
-            this.openers = new Dictionary<Jobs, Dictionary<string, List<uint>>>();
-            this.defaultOpeners = new Dictionary<Jobs, Dictionary<string, List<uint>>>();
-        }
-
+        public List<uint> Loaded { get; set; } = [];
+        private readonly Dictionary<Jobs, Dictionary<string, List<uint>>> openers = new();
+        private readonly Dictionary<Jobs, Dictionary<string, List<uint>>> defaultOpeners = new();
+        private string OpenersFile { get; init; } = "empty";
+        
         private OpenerManager(IActionManager actions, ValueTuple _) : this(actions)
         {
-            this.openersFile = Path.Combine(OpenerCreator.PluginInterface.ConfigDirectory.FullName, "openers.json");
-            this.openers = LoadOpeners(openersFile);
+            this.OpenersFile = Path.Combine(OpenerCreator.PluginInterface.ConfigDirectory.FullName, "openers.json");
+            this.openers = LoadOpeners(OpenersFile);
             this.defaultOpeners = LoadOpeners(Path.Combine(OpenerCreator.PluginInterface.AssemblyLocation.Directory!.FullName, "openers.json"));
         }
 
@@ -50,29 +39,31 @@ namespace OpenerCreator.Managers
             }
         }
 
-        public void AddOpener(string name, Jobs job, List<uint> actions)
+        public void AddOpener(string name, Jobs job, IEnumerable<uint> actions)
         {
-            if (!openers.ContainsKey(job))
+            if (!openers.TryGetValue(job, out var value))
             {
-                openers[job] = new Dictionary<string, List<uint>>();
+                value = new Dictionary<string, List<uint>>();
+                openers[job] = value;
             }
-            openers[job][name] = new List<uint>(actions);
+
+            value[name] = [..actions];
         }
 
         public List<Tuple<Jobs, List<string>>> GetDefaultNames() => defaultOpeners.Select(x => Tuple.Create(x.Key, x.Value.Keys.ToList())).ToList();
 
-        public List<uint> GetDefaultOpener(string name, Jobs job) => new(defaultOpeners[job][name]);
+        public List<uint> GetDefaultOpener(string name, Jobs job) => [..defaultOpeners[job][name]];
 
-        public List<uint> GetOpener(string name, Jobs job) => new(openers[job][name]);
+        public List<uint> GetOpener(string name, Jobs job) => [..openers[job][name]];
 
         public List<Tuple<Jobs, List<string>>> GetNames() => openers.Select(x => Tuple.Create(x.Key, x.Value.Keys.ToList())).ToList();
 
         public void DeleteOpener(string name, Jobs job)
         {
-            if (openers.ContainsKey(job))
+            if (openers.TryGetValue(job, out var value))
             {
-                openers[job].Remove(name);
-                if (openers[job].Count == 0)
+                value.Remove(name);
+                if (value.Count == 0)
                 {
                     openers.Remove(job);
                 }
@@ -124,7 +115,7 @@ namespace OpenerCreator.Managers
 
             provideFeedback(feedback);
         }
-        private bool AreActionsDifferent(List<uint> used, int openerIndex, int usedIndex, out string intended, out uint actual)
+        private bool AreActionsDifferent(IReadOnlyList<uint> used, int openerIndex, int usedIndex, out string intended, out uint actual)
         {
             var intendedId = Loaded[openerIndex];
             intended = actions.GetActionName(intendedId);
@@ -160,7 +151,7 @@ namespace OpenerCreator.Managers
             try
             {
                 var jsonData = JsonSerializer.Serialize(openers);
-                File.WriteAllText(openersFile, jsonData);
+                File.WriteAllText(OpenersFile, jsonData);
             }
             catch (Exception e)
             {

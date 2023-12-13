@@ -9,33 +9,30 @@ namespace OpenerCreator
 {
     public sealed class OpenerCreator : IDalamudPlugin
     {
-        public string Name => "OpenerCreator";
-        private readonly string command = "/ocrt";
-        public static Configuration Config = null!;
-        private Gui.OpenerCreatorWindow OpenerCreatorGui { get; init; }
-        private OnUsedActionHook OnUsedHook { get; init; }
+        private const string command = "/ocrt";
+        public static Configuration Config { get; set; } = null!;
+        private OpenerCreatorWindow OpenerCreatorGui { get; init; }
+        private UsedActionHook UsedHook { get; init; }
 
         [PluginService][RequiredVersion("1.0")] public static DalamudPluginInterface PluginInterface { get; private set; } = null!;
         [PluginService][RequiredVersion("1.0")] public static ICommandManager CommandManager { get; private set; } = null!;
-        [PluginService][RequiredVersion("1.0")] public static IChatGui ChatGui { get; private set; } = null!;
         [PluginService][RequiredVersion("1.0")] public static IGameInteropProvider GameInteropProvider { get; private set; } = null!;
         [PluginService][RequiredVersion("1.0")] public static IDataManager DataManager { get; private set; } = null!;
         [PluginService][RequiredVersion("1.0")] public static IClientState ClientState { get; private set; } = null!;
-        [PluginService][RequiredVersion("1.0")] public static IGameGui GameUI { get; private set; } = null!;
         [PluginService][RequiredVersion("1.0")] public static IPluginLog PluginLog { get; private set; } = null!;
 
         public OpenerCreator()
         {
-            this.OnUsedHook = new OnUsedActionHook();
+            this.UsedHook = new UsedActionHook();
 
-            OpenerCreatorGui = new OpenerCreatorWindow(this.OnUsedHook.StartRecording, this.OnUsedHook.StopRecording);
+            OpenerCreatorGui = new OpenerCreatorWindow(this.UsedHook.StartRecording, this.UsedHook.StopRecording);
 
             Config = Configuration.Load();
 
             PluginInterface.UiBuilder.Draw += OpenerCreatorGui.Draw;
             PluginInterface.UiBuilder.OpenConfigUi += () => OpenerCreatorGui.Enabled = true;
 
-            CommandManager.AddHandler(command, new CommandInfo((string _, string _) => OpenerCreatorGui.Enabled = true)
+            CommandManager.AddHandler(command, new CommandInfo((_, _) => OpenerCreatorGui.Enabled = true)
             {
                 HelpMessage = "Create, save, and practice your openers."
             });
@@ -44,7 +41,7 @@ namespace OpenerCreator
         public void Dispose()
         {
             CommandManager.RemoveHandler(command);
-            this.OnUsedHook.Dispose();
+            this.UsedHook.Dispose();
             OpenerCreatorGui.Dispose();
         }
     }

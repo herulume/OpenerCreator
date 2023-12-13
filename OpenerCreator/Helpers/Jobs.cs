@@ -50,7 +50,7 @@ namespace OpenerCreator.Helpers
 
     public static class JobsExtensions
     {
-        public static JobCategory getCategory(this Jobs job)
+        public static JobCategory GetCategory(this Jobs job)
         {
             return job switch
             {
@@ -63,17 +63,16 @@ namespace OpenerCreator.Helpers
             };
         }
 
-        public static bool filterBy(JobCategory filter, Jobs job)
+        public static bool FilterBy(JobCategory filter, Jobs job)
         {
-            return (filter & getCategory(job)) != 0;
+            return (filter & GetCategory(job)) != 0;
         }
 
-        public static JobCategory toggle(JobCategory filter, JobCategory category)
+        public static JobCategory Toggle(JobCategory filter, JobCategory category)
         {
             if ((filter & category) != 0)
                 return filter & ~category; // remove
-            else
-                return filter | category; // add
+            return filter | category;      // add
         }
     }
 
