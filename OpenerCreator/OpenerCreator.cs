@@ -9,7 +9,7 @@ namespace OpenerCreator;
 
 public sealed class OpenerCreator : IDalamudPlugin
 {
-    private const string command = "/ocrt";
+    private const string Command = "/ocrt";
 
     public OpenerCreator()
     {
@@ -22,7 +22,7 @@ public sealed class OpenerCreator : IDalamudPlugin
         PluginInterface.UiBuilder.Draw += OpenerCreatorGui.Draw;
         PluginInterface.UiBuilder.OpenConfigUi += () => OpenerCreatorGui.Enabled = true;
 
-        CommandManager.AddHandler(command, new CommandInfo((_, _) => OpenerCreatorGui.Enabled = true)
+        CommandManager.AddHandler(Command, new CommandInfo((_, _) => OpenerCreatorGui.Enabled = true)
         {
             HelpMessage = "Create, save, and practice your openers."
         });
@@ -58,7 +58,7 @@ public sealed class OpenerCreator : IDalamudPlugin
 
     public void Dispose()
     {
-        CommandManager.RemoveHandler(command);
+        CommandManager.RemoveHandler(Command);
         UsedHook.Dispose();
         OpenerCreatorGui.Dispose();
     }

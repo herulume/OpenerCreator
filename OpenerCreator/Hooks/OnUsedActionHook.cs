@@ -18,7 +18,7 @@ public class UsedActionHook : IDisposable
     private readonly List<uint> used = new(MaxItemCount);
     private readonly Hook<UsedActionDelegate>? usedActionHook;
 
-    private int nactions;
+    private int nActions;
     private Action<Feedback> provideFeedback;
     private Action<int> wrongAction;
 
@@ -32,7 +32,7 @@ public class UsedActionHook : IDisposable
             "40 55 53 57 41 54 41 55 41 56 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 70",
             DetourUsedAction
         );
-        nactions = 0;
+        nActions = 0;
         provideFeedback = _ => { };
         wrongAction = _ => { };
     }
@@ -52,7 +52,7 @@ public class UsedActionHook : IDisposable
         provideFeedback = provideFeedbackAction;
         wrongAction = wrongActionAction;
         usedActionHook?.Enable();
-        nactions = OpenerManager.Instance.Loaded.Count;
+        nActions = OpenerManager.Instance.Loaded.Count;
     }
 
     public void StopRecording()
@@ -61,7 +61,7 @@ public class UsedActionHook : IDisposable
             return;
 
         usedActionHook?.Disable();
-        nactions = 0;
+        nActions = 0;
         used.Clear();
 
         var feedback = new Feedback();
@@ -75,7 +75,7 @@ public class UsedActionHook : IDisposable
             return;
 
         usedActionHook?.Disable();
-        nactions = 0;
+        nActions = 0;
         OpenerManager.Instance.Compare(used, provideFeedback, wrongAction);
         used.Clear();
     }
@@ -92,15 +92,15 @@ public class UsedActionHook : IDisposable
         var action = sheet!.GetRow(actionId);
         if (action != null && Actions.IsPvEAction(action))
         {
-            if (nactions == 0) // opener not defined
+            if (nActions == 0) // opener not defined
             {
                 StopRecording();
                 return;
             }
 
             used.Add(actionId);
-            nactions--;
-            if (nactions <= 0) Compare();
+            nActions--;
+            if (nActions <= 0) Compare();
         }
     }
 
