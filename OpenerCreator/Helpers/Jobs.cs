@@ -24,6 +24,7 @@ public enum Jobs
     NIN,
     SAM,
     RPR,
+    VPR,
 
     // Physical Ranged
     BRD,
@@ -34,6 +35,7 @@ public enum Jobs
     BLM,
     SMN,
     RDM,
+    PCT,
     BLU
 }
 
@@ -56,9 +58,9 @@ public static class JobsExtensions
         {
             Jobs.PLD or Jobs.WAR or Jobs.DRK or Jobs.GNB => JobCategory.Tank,
             Jobs.WHM or Jobs.SCH or Jobs.AST or Jobs.SGE => JobCategory.Healer,
-            Jobs.MNK or Jobs.DRG or Jobs.NIN or Jobs.SAM or Jobs.RPR => JobCategory.Melee,
+            Jobs.MNK or Jobs.DRG or Jobs.NIN or Jobs.SAM or Jobs.RPR or Jobs.VPR => JobCategory.Melee,
             Jobs.BRD or Jobs.MCH or Jobs.DNC => JobCategory.PhysicalRanged,
-            Jobs.BLM or Jobs.SMN or Jobs.RDM or Jobs.BLU => JobCategory.MagicalRanged,
+            Jobs.BLM or Jobs.SMN or Jobs.RDM or Jobs.PCT or Jobs.BLU => JobCategory.MagicalRanged,
             _ => JobCategory.None
         };
     }

@@ -26,10 +26,10 @@ public class UsedActionHook : IDisposable
     {
         sheet = OpenerCreator.DataManager.GetExcelSheet<LuminaAction>();
 
-        // credits to Tischel for the sig
+        // credits to Tischel for the original sig
         // https://github.com/Tischel/ActionTimeline/blob/master/ActionTimeline/Helpers/TimelineManager.cs
         usedActionHook = OpenerCreator.GameInteropProvider.HookFromSignature<UsedActionDelegate>(
-            "40 55 53 57 41 54 41 55 41 56 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 70",
+            "40 55 56 57 41 54 41 55 41 56 48 8D AC 24",
             DetourUsedAction
         );
         nActions = 0;
@@ -86,7 +86,7 @@ public class UsedActionHook : IDisposable
         usedActionHook?.Original(sourceId, sourceCharacter, pos, effectHeader, effectArray, effectTrail);
 
         var player = OpenerCreator.ClientState.LocalPlayer;
-        if (player == null || sourceId != player.ObjectId) return;
+        if (player == null || sourceId != player.EntityId) return;
 
         var actionId = (uint)Marshal.ReadInt32(effectHeader, 0x8);
         var action = sheet!.GetRow(actionId);
