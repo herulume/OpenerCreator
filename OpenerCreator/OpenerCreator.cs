@@ -17,12 +17,12 @@ public sealed class OpenerCreator : IDalamudPlugin
     public OpenerCreator()
     {
         Config = Configuration.Load();
-        
+
         UsedActionHook = new UsedActionHook();
 
         OpenerCreatorWindow = new OpenerCreatorWindow(UsedActionHook.StartRecording, UsedActionHook.StopRecording);
         WindowSystem.AddWindow(OpenerCreatorWindow);
-        
+
         PluginInterface.UiBuilder.Draw += WindowSystem.Draw;
         PluginInterface.UiBuilder.OpenConfigUi += () => OpenerCreatorWindow.Toggle();
         PluginInterface.UiBuilder.OpenMainUi += () => OpenerCreatorWindow.Toggle();
@@ -32,7 +32,7 @@ public sealed class OpenerCreator : IDalamudPlugin
             HelpMessage = "Create, save, and practice your openers."
         });
     }
-    
+
     public readonly WindowSystem WindowSystem = new("OpenerCreator");
     private OpenerCreatorWindow OpenerCreatorWindow { get; init; }
     private UsedActionHook UsedActionHook { get; init; }
@@ -40,9 +40,9 @@ public sealed class OpenerCreator : IDalamudPlugin
 
     [PluginService]
     public static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
-    
+
     [PluginService]
-    public static ITextureProvider  TextureProvider { get; private set; } = null!;
+    public static ITextureProvider TextureProvider { get; private set; } = null!;
 
     [PluginService]
     public static ICommandManager CommandManager { get; private set; } = null!;

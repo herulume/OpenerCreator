@@ -117,8 +117,10 @@ public class OpenerManager(IActionManager actions)
             feedback.AddMessage(Feedback.MessageType.Success, "Great job! Opener executed perfectly.");
 
         if (shift != 0)
+        {
             feedback.AddMessage(Feedback.MessageType.Info,
                                 $"You shifted your opener by {shift} {(shift == 1 ? "action" : "actions")}.");
+        }
 
         provideFeedback(feedback);
     }

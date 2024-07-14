@@ -19,7 +19,7 @@ public class OpenerCreatorWindow : Window, IDisposable
     private static readonly Vector2 CountdownNumberSize = new(240, 320);
     private readonly ISharedImmediateTexture countdownGo;
     private readonly ISharedImmediateTexture countdownNumbers;
-    
+
     private readonly Action<int, Action<Feedback>, Action<int>> startRecording;
     private readonly Action stopRecording;
     private readonly HashSet<int> wrongActions;
@@ -44,7 +44,7 @@ public class OpenerCreatorWindow : Window, IDisposable
             MinimumSize = new Vector2(100, 100),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
-        
+
         name = "";
         search = "";
         jobFilter = Jobs.ANY;
@@ -76,8 +76,6 @@ public class OpenerCreatorWindow : Window, IDisposable
 
     public override void Draw()
     {
-        //ImGui.SetNextWindowSizeConstraints(new Vector2(100, 100), new Vector2(4000, 2000));
-        //ImGui.Begin("Opener Creator", ref Enabled);
         DrawActionsGui();
         ImGui.BeginTabBar("OpenerCreatorMainTabBar");
         DrawOpenerLoader();
@@ -85,7 +83,6 @@ public class OpenerCreatorWindow : Window, IDisposable
         DrawRecordActions();
         ImGui.EndTabBar();
         ImGui.Spacing();
-       // ImGui.End();
 
         DrawCountdown();
     }
@@ -279,9 +276,11 @@ public class OpenerCreatorWindow : Window, IDisposable
 
         // Search bar
         if (ImGui.InputText("Search", ref search, 64))
+        {
             filteredActions = search.Length > 0
                                   ? Actions.Instance.GetNonRepeatedActionsByName(search, jobFilter)
                                   : Actions.Instance.NonRepeatedIdList();
+        }
 
         ImGui.Text($"{filteredActions.Count} Results");
         ImGui.SameLine();
@@ -380,7 +379,8 @@ public class OpenerCreatorWindow : Window, IDisposable
         switch (timer)
         {
             case <= 0:
-                drawlist.AddImage(countdownGo.GetWrapOrEmpty().ImGuiHandle, center - (countdownGo.GetWrapOrEmpty().Size / 2),
+                drawlist.AddImage(countdownGo.GetWrapOrEmpty().ImGuiHandle,
+                                  center - (countdownGo.GetWrapOrEmpty().Size / 2),
                                   center + (countdownGo.GetWrapOrEmpty().Size / 2), Vector2.Zero, Vector2.One, color);
                 break;
             case <= 5:
@@ -397,7 +397,8 @@ public class OpenerCreatorWindow : Window, IDisposable
                                   center + new Vector2(0.0f, CountdownNumberSize.Y / 2),
                                   new Vector2(dig1 * uspacing, 0.0f), new Vector2((dig1 * uspacing) + uspacing, 1.0f),
                                   color);
-                drawlist.AddImage(countdownNumbers.GetWrapOrEmpty().ImGuiHandle, center - new Vector2(0.0f, CountdownNumberSize.Y / 2),
+                drawlist.AddImage(countdownNumbers.GetWrapOrEmpty().ImGuiHandle,
+                                  center - new Vector2(0.0f, CountdownNumberSize.Y / 2),
                                   center + CountdownNumberSize with { Y = CountdownNumberSize.Y / 2 },
                                   new Vector2(dig2 * uspacing, 0.0f), new Vector2((dig2 * uspacing) + uspacing, 1.0f),
                                   color);
