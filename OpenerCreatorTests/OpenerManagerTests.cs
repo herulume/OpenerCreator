@@ -15,7 +15,6 @@ namespace OpenerCreatorTests
 
         public bool SameActionsByName(string action1, uint action2) =>
             GetActionName(action2).Contains(action1, System.StringComparison.CurrentCultureIgnoreCase);
-
     }
 
     public class OpenerManagerTests
@@ -110,16 +109,16 @@ namespace OpenerCreatorTests
             Assert.Contains("by 1 action", string.Join("\n", feedback.GetMessages()));
             Assert.Equal(1, (int)errors);
         }
-        
+
         [Fact]
         public void Compare_WithOldAction_ShouldFail()
         {
             // Arrange
             var openerManager = new OpenerManager(new ActionsMock())
             {
-                Loaded = [ 2, ActionsMock.OldAction1 ]
+                Loaded = [2, ActionsMock.OldAction1]
             };
-            var used = new List<uint> { 2, 1};
+            var used = new List<uint> { 2, 1 };
             var feedback = new Feedback();
             uint errors = 0;
 
@@ -129,7 +128,7 @@ namespace OpenerCreatorTests
             // Assert
             var errorMessages = feedback.GetList()
                                         .Where(m => m.Item1 == Feedback.MessageType.Error);
-            Assert.Single( feedback.GetList());
+            Assert.Single(feedback.GetList());
             Assert.Single(errorMessages);
             Assert.Equal(1, (int)errors);
             Assert.Contains("in action 2", string.Join("\n", feedback.GetMessages()));
