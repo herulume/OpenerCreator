@@ -9,7 +9,6 @@ namespace OpenerCreator.Managers;
 
 public class OpenerManager(IActionManager actions)
 {
-    private const uint CatchAllAction = 0;
     private static OpenerManager? SingletonInstance;
     private static readonly object LockObject = new();
     private readonly Dictionary<Jobs, Dictionary<string, List<uint>>> defaultOpeners = new();
@@ -102,7 +101,7 @@ public class OpenerManager(IActionManager actions)
         {
             var openerIndex = i + shift;
 
-            if (AreActionsDifferent(used, openerIndex, i, out var intended, out var actual))
+            if (!AreActionsEqual(used, openerIndex, i, out var intended, out var actual))
             {
                 error = true;
                 feedback.AddMessage(Feedback.MessageType.Error,
@@ -125,16 +124,16 @@ public class OpenerManager(IActionManager actions)
         provideFeedback(feedback);
     }
 
-    private bool AreActionsDifferent(
+    private bool AreActionsEqual(
         IReadOnlyList<uint> used, int openerIndex, int usedIndex, out string intended, out uint actual)
     {
         var intendedId = Loaded[openerIndex];
         intended = actions.GetActionName(intendedId);
         actual = used[usedIndex];
 
-        return Loaded[openerIndex] != actual &&
-               !actions.SameActionsByName(intended, actual) &&
-               intendedId != CatchAllAction;
+        return intendedId == actual ||
+               intendedId == IActionManager.CatchAllActionId ||
+               actions.SameActionsByName(intended, actual);
     }
 
     private bool ShouldShift(int openerIndex, int size, uint usedValue)
