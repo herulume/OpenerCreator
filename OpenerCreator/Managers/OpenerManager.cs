@@ -132,9 +132,14 @@ public class OpenerManager(IActionManager actions)
         intended = actions.GetActionName(intendedId);
         actual = used[usedIndex];
 
-        return intendedId == actual ||
+        return AreActionsEqual(intendedId, intended, actual);
+    }
+
+    public bool AreActionsEqual(uint intendedId, string intendedName, uint actualId)
+    {
+        return intendedId == actualId ||
                intendedId == IActionManager.CatchAllActionId ||
-               actions.SameActionsByName(intended, actual);
+               actions.SameActionsByName(intendedName, actualId);
     }
 
     private bool ShouldShift(int openerIndex, int size, uint usedValue)

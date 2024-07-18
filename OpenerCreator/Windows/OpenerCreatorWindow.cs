@@ -18,7 +18,6 @@ public class OpenerCreatorWindow : Window, IDisposable
 {
     private static readonly Vector2 IconSize = new(32);
     private static readonly Vector2 CountdownNumberSize = new(240, 320);
-    private static bool countdown;
     private readonly ISharedImmediateTexture countdownGo;
     private readonly ISharedImmediateTexture countdownNumbers;
 
@@ -357,7 +356,7 @@ public class OpenerCreatorWindow : Window, IDisposable
         ImGui.BeginChild("settings");
         ImGui.BeginGroup();
         ImGui.Text("Countdown");
-        ImGui.Checkbox("Enable countdown", ref countdown);
+        ImGui.Checkbox("Enable countdown", ref OpenerCreator.Config.IsCountdownEnabled);
 
         if (ImGui.InputInt("Countdown timer", ref OpenerCreator.Config.CountdownTime))
         {
@@ -366,13 +365,20 @@ public class OpenerCreatorWindow : Window, IDisposable
         }
 
         ImGui.EndGroup();
+
+        ImGui.Spacing();
+        ImGui.BeginGroup();
+        ImGui.Text("Action Recording");
+        ImGui.Checkbox("Stop recording at first mistake", ref OpenerCreator.Config.StopAtFirstMistake);
+        ImGui.EndGroup();
+
         ImGui.EndChild();
         ImGui.EndTabItem();
     }
 
     private void DrawCountdown()
     {
-        if (countdown == false || countdownStart == null ||
+        if (OpenerCreator.Config.IsCountdownEnabled == false || countdownStart == null ||
             OpenerCreator.ClientState.LocalPlayer!.StatusFlags.ToString()
                          .Contains(StatusFlags.InCombat.ToString()))
             return;
