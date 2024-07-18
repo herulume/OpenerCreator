@@ -5,11 +5,16 @@
     "Description": "Create your opener and practice with a striking dummy. Provides basic analysis.",
     "InternalName": "openerCreator",
     "ApplicableVersion": "any",
+    "CategoryTags": [
+        "jobs"
+    ],
     "Tags": [
         "pve",
         "rotation",
         "opener",
         "helper",
-        "simple"
+        "jobs",
+        "combat",
+        "lines"
     ]
 }

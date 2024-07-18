@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Dalamud.Hooking;
 using Lumina.Excel;
+using OpenerCreator.Actions;
 using OpenerCreator.Helpers;
 using OpenerCreator.Managers;
 using LuminaAction = Lumina.Excel.GeneratedSheets.Action;
@@ -12,7 +13,7 @@ namespace OpenerCreator.Hooks;
 
 public class UsedActionHook : IDisposable
 {
-    private static readonly int MaxItemCount = 50;
+    private const int MaxItemCount = 50;
 
     private readonly ExcelSheet<LuminaAction>? sheet;
     private readonly List<uint> used = new(MaxItemCount);
@@ -63,10 +64,6 @@ public class UsedActionHook : IDisposable
         usedActionHook?.Disable();
         nActions = 0;
         used.Clear();
-
-        var feedback = new Feedback();
-        feedback.AddMessage(Feedback.MessageType.Info, "No opener defined.");
-        provideFeedback(feedback);
     }
 
     private void Compare()
@@ -90,14 +87,35 @@ public class UsedActionHook : IDisposable
 
         var actionId = (uint)Marshal.ReadInt32(effectHeader, 0x8);
         var action = sheet!.GetRow(actionId);
-        if (action != null && Actions.IsPvEAction(action))
+        if (action != null && PvEActions.IsPvEAction(action))
         {
-            if (nActions == 0) // opener not defined
+            if (nActions == 0) // Opener not defined or fully processed
             {
                 StopRecording();
                 return;
             }
 
+            // Leave early
+            var loadedLength = OpenerManager.Instance.Loaded.Count;
+            var index = loadedLength - nActions;
+            var intendedAction = OpenerManager.Instance.Loaded[index];
+            var intendedName = PvEActions.Instance.GetActionName(intendedAction);
+            if (OpenerCreator.Config.StopAtFirstMistake &&
+                !OpenerManager.Instance.AreActionsEqual(intendedAction, intendedName, actionId)
+               )
+            {
+                wrongAction(index);
+                var f = new Feedback();
+                f.AddMessage(
+                    Feedback.MessageType.Error,
+                    $"Difference in action {index + 1}: Substituted {intendedName} for {PvEActions.Instance.GetActionName(actionId)}"
+                );
+                provideFeedback(f);
+                StopRecording();
+                return;
+            }
+
+            // Process the opener
             used.Add(actionId);
             nActions--;
             if (nActions <= 0) Compare();
