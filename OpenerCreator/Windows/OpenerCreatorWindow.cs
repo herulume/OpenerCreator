@@ -21,6 +21,15 @@ public class OpenerCreatorWindow : Window, IDisposable
     private readonly ISharedImmediateTexture countdownGo;
     private readonly ISharedImmediateTexture countdownNumbers;
 
+    private readonly Dictionary<JobCategory, bool> currentColor = new()
+    {
+        { JobCategory.Tank, false },
+        { JobCategory.Healer, false },
+        { JobCategory.Melee, false },
+        { JobCategory.PhysicalRanged, false },
+        { JobCategory.MagicalRanged, false }
+    };
+
     private readonly Action<int, Action<Feedback>, Action<int>> startRecording;
     private readonly Action stopRecording;
     private readonly HashSet<int> wrongActions;
@@ -33,19 +42,10 @@ public class OpenerCreatorWindow : Window, IDisposable
     private Jobs jobFilter;
 
     private string name;
-    private List<Tuple<Jobs, List<string>>> savedOpeners;
     private bool recording;
+    private List<Tuple<Jobs, List<string>>> savedOpeners;
+    private bool saveOpenerInvalidConfig;
     private string search;
-
-    private readonly Dictionary<JobCategory, bool> currentColor = new()
-    {
-        { JobCategory.Tank, false },
-        { JobCategory.Healer, false },
-        { JobCategory.Melee, false },
-        { JobCategory.PhysicalRanged, false },
-        { JobCategory.MagicalRanged, false },
-    };
-    private bool saveOpenerInvalidConfig = false;
 
 
     public OpenerCreatorWindow(Action<int, Action<Feedback>, Action<int>> startRecording, Action stopRecording)
@@ -92,9 +92,10 @@ public class OpenerCreatorWindow : Window, IDisposable
         DrawActionsGui();
         ImGui.Spacing();
         ImGui.BeginTabBar("OpenerCreatorMainTabBar");
-        DrawOpenerLoader();
-        DrawAbilityFilter();
-        DrawRecordActions();
+        DrawOpenerLoaderTab();
+        DrawCreatorTab();
+        DrawRecordActionsTab();
+        DrawSettingsTab();
         ImGui.EndTabBar();
         DrawCountdown();
     }
@@ -193,7 +194,7 @@ public class OpenerCreatorWindow : Window, IDisposable
         ImGui.EndChildFrame();
     }
 
-    private void DrawOpenerLoader()
+    private void DrawOpenerLoaderTab()
     {
         if (!ImGui.BeginTabItem("Loader"))
             return;
@@ -253,7 +254,7 @@ public class OpenerCreatorWindow : Window, IDisposable
         ImGui.EndTabItem();
     }
 
-    private void DrawAbilityFilter()
+    private void DrawCreatorTab()
     {
         if (!ImGui.BeginTabItem("Creator"))
             return;
@@ -267,13 +268,11 @@ public class OpenerCreatorWindow : Window, IDisposable
         if (ImGui.BeginCombo("Job Filter", jobFilter.ToString()))
         {
             foreach (Jobs job in Enum.GetValues(typeof(Jobs)))
-            {
                 if (ImGui.Selectable(job.ToString()))
                 {
                     jobFilter = job;
                     filteredActions = PvEActions.Instance.GetNonRepeatedActionsByName(search, jobFilter);
                 }
-            }
 
             ImGui.EndCombo();
         }
@@ -311,20 +310,14 @@ public class OpenerCreatorWindow : Window, IDisposable
         ImGui.EndTabItem();
     }
 
-    private void DrawRecordActions()
+    private void DrawRecordActionsTab()
     {
         if (!ImGui.BeginTabItem("Record Actions"))
             return;
 
         ImGui.BeginChild("recordactions");
         ImGui.Text("Start a countdown, record your actions and compare them with your opener.");
-
-        if (ImGui.InputInt("Countdown timer", ref OpenerCreator.Config.CountdownTime))
-        {
-            OpenerCreator.Config.CountdownTime = Math.Clamp(OpenerCreator.Config.CountdownTime, 0, 30);
-            OpenerCreator.Config.Save();
-        }
-
+        ImGui.Spacing();
         if (ImGui.Button("Start Recording"))
         {
             feedback.Clear();
@@ -349,6 +342,23 @@ public class OpenerCreatorWindow : Window, IDisposable
         }
 
         foreach (var line in feedback) ImGui.Text(line);
+
+        ImGui.EndChild();
+        ImGui.EndTabItem();
+    }
+
+    private static void DrawSettingsTab()
+    {
+        if (!ImGui.BeginTabItem("Settings"))
+            return;
+
+        ImGui.BeginChild("settings");
+
+        if (ImGui.InputInt("Countdown timer", ref OpenerCreator.Config.CountdownTime))
+        {
+            OpenerCreator.Config.CountdownTime = Math.Clamp(OpenerCreator.Config.CountdownTime, 0, 30);
+            OpenerCreator.Config.Save();
+        }
 
         ImGui.EndChild();
         ImGui.EndTabItem();
@@ -473,7 +483,10 @@ public class OpenerCreatorWindow : Window, IDisposable
         }
     }
 
-    private void WrongAction(int i) => wrongActions.Add(i);
+    private void WrongAction(int i)
+    {
+        wrongActions.Add(i);
+    }
 
     public void AddFeedback(Feedback f)
     {
@@ -482,8 +495,10 @@ public class OpenerCreatorWindow : Window, IDisposable
         feedback = f.GetMessages();
     }
 
-    private static nint GetIcon(uint id) =>
-        PvEActions.GetIconTexture(id).GetWrapOrEmpty().ImGuiHandle;
+    private static nint GetIcon(uint id)
+    {
+        return PvEActions.GetIconTexture(id).GetWrapOrEmpty().ImGuiHandle;
+    }
 
     private static void CollapsingHeader(string label, Action action)
     {

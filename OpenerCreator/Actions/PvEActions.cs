@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dalamud.Interface.Textures;
@@ -25,9 +26,8 @@ public class PvEActions : IActionManager
             new GroupOfActions(
                 "Dancer Steps",
                 "lmao",
-                new List<uint> { 1, 2, 3, 4, 5 },
-                true
-                ),
+                new List<uint> { 1, 2, 3, 4, 5 }
+            )
         };
     }
 
@@ -49,16 +49,13 @@ public class PvEActions : IActionManager
 
     public string GetActionName(uint id)
     {
-        if (id == 0)
-        {
-            return IActionManager.CatchAllActionName;
-        }
+        if (id == 0) return IActionManager.CatchAllActionName;
         return actionsSheetDictionary.GetValueOrDefault(id)?.Name.ToString() ?? IActionManager.OldActionName;
     }
 
     public bool SameActionsByName(string name, uint aId)
     {
-        return GetActionName(aId).Contains(name, System.StringComparison.CurrentCultureIgnoreCase);
+        return GetActionName(aId).Contains(name, StringComparison.CurrentCultureIgnoreCase);
     }
 
     public List<uint> NonRepeatedIdList()
@@ -66,17 +63,23 @@ public class PvEActions : IActionManager
         return actionsSheet.Select(a => a.RowId).Where(id => id != 0).ToList();
     }
 
-    public LuminaAction GetAction(uint id) => actionsSheetDictionary[id];
+    public LuminaAction GetAction(uint id)
+    {
+        return actionsSheetDictionary[id];
+    }
 
-    public ushort? GetActionIcon(uint id) => actionsSheetDictionary.GetValueOrDefault(id)?.Icon;
-    
+    public ushort? GetActionIcon(uint id)
+    {
+        return actionsSheetDictionary.GetValueOrDefault(id)?.Icon;
+    }
+
 
     public List<uint> GetNonRepeatedActionsByName(string name, Jobs job)
     {
         return actionsSheet
                .AsParallel()
                .Where(a =>
-                          a.Name.ToString().Contains(name, System.StringComparison.CurrentCultureIgnoreCase)
+                          a.Name.ToString().Contains(name, StringComparison.CurrentCultureIgnoreCase)
                           && (a.ClassJobCategory.Value!.Name.ToString().Contains(job.ToString()) || job == Jobs.ANY)
                )
                .Select(a => a.RowId)

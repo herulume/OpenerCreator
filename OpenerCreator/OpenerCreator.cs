@@ -3,14 +3,16 @@ using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using OpenerCreator.Windows;
 using OpenerCreator.Hooks;
+using OpenerCreator.Windows;
 
 namespace OpenerCreator;
 
 public sealed class OpenerCreator : IDalamudPlugin
 {
     private const string Command = "/ocrt";
+
+    public readonly WindowSystem WindowSystem = new("OpenerCreator");
 
     public OpenerCreator()
     {
@@ -31,7 +33,6 @@ public sealed class OpenerCreator : IDalamudPlugin
         });
     }
 
-    public readonly WindowSystem WindowSystem = new("OpenerCreator");
     private OpenerCreatorWindow OpenerCreatorWindow { get; init; }
     private UsedActionHook UsedActionHook { get; init; }
     public static Configuration Config { get; set; } = null!;
