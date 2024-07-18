@@ -1,6 +1,4 @@
 using Dalamud.Game.Command;
-using Dalamud.Interface;
-using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;

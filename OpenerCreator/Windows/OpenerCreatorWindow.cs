@@ -8,6 +8,7 @@ using Dalamud.Interface.Textures;
 using Dalamud.Interface.Windowing;
 using Dalamud.Utility;
 using ImGuiNET;
+using OpenerCreator.Actions;
 using OpenerCreator.Helpers;
 using OpenerCreator.Managers;
 
@@ -39,6 +40,7 @@ public class OpenerCreatorWindow : Window, IDisposable
     public OpenerCreatorWindow(Action<int, Action<Feedback>, Action<int>> startRecording, Action stopRecording)
         : base("Opener Creator###ocrt", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
+        ForceMainWindow = true; // Centre countdown
         SizeConstraints = new WindowSizeConstraints
         {
             MinimumSize = new Vector2(100, 100),
@@ -52,7 +54,7 @@ public class OpenerCreatorWindow : Window, IDisposable
         feedback = [];
         actions = [];
         savedOpeners = OpenerManager.Instance.GetNames();
-        filteredActions = Actions.Instance.NonRepeatedIdList();
+        filteredActions = PvEActions.Instance.NonRepeatedIdList();
         wrongActions = [];
 
         this.startRecording = startRecording;
@@ -140,7 +142,7 @@ public class OpenerCreatorWindow : Window, IDisposable
                     actionDnd = i;
 
                 if (ImGui.IsItemHovered())
-                    ImGui.SetTooltip(Actions.Instance.GetActionName(actions[i]));
+                    ImGui.SetTooltip(PvEActions.Instance.GetActionName(actions[i]));
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                     delete = i;
             }
@@ -268,7 +270,7 @@ public class OpenerCreatorWindow : Window, IDisposable
                 if (ImGui.Selectable(job.ToString()))
                 {
                     jobFilter = job;
-                    filteredActions = Actions.Instance.GetNonRepeatedActionsByName(search, jobFilter);
+                    filteredActions = PvEActions.Instance.GetNonRepeatedActionsByName(search, jobFilter);
                 }
 
             ImGui.EndCombo();
@@ -278,8 +280,8 @@ public class OpenerCreatorWindow : Window, IDisposable
         if (ImGui.InputText("Search", ref search, 64))
         {
             filteredActions = search.Length > 0
-                                  ? Actions.Instance.GetNonRepeatedActionsByName(search, jobFilter)
-                                  : Actions.Instance.NonRepeatedIdList();
+                                  ? PvEActions.Instance.GetNonRepeatedActionsByName(search, jobFilter)
+                                  : PvEActions.Instance.NonRepeatedIdList();
         }
 
         ImGui.Text($"{filteredActions.Count} Results");
@@ -290,7 +292,7 @@ public class OpenerCreatorWindow : Window, IDisposable
 
         for (var i = 0; i < Math.Min(20, filteredActions.Count); i++)
         {
-            var action = Actions.Instance.GetAction(filteredActions[i]);
+            var action = PvEActions.Instance.GetAction(filteredActions[i]);
             if (ImGui.ImageButton(GetIcon(filteredActions[i]), IconSize))
             {
                 actions.Add(filteredActions[i]);
@@ -448,10 +450,8 @@ public class OpenerCreatorWindow : Window, IDisposable
         feedback = f.GetMessages();
     }
 
-    private static nint GetIcon(uint id)
-    {
-        return Actions.GetIconTexture(id).GetWrapOrEmpty().ImGuiHandle;
-    }
+    private static nint GetIcon(uint id) =>
+        PvEActions.GetIconTexture(id).GetWrapOrEmpty().ImGuiHandle;
 
     private static void CollapsingHeader(string label, Action action)
     {

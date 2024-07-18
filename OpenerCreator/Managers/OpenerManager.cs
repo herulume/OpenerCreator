@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using OpenerCreator.Actions;
 using OpenerCreator.Helpers;
 
 namespace OpenerCreator.Managers;
@@ -33,7 +34,7 @@ public class OpenerManager(IActionManager actions)
             {
                 lock (LockObject)
                 {
-                    SingletonInstance ??= new OpenerManager(Actions.Instance, new ValueTuple());
+                    SingletonInstance ??= new OpenerManager(PvEActions.Instance, new ValueTuple());
                 }
             }
 

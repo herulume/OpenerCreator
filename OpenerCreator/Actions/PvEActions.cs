@@ -1,37 +1,37 @@
 using System.Collections.Generic;
 using System.Linq;
 using Dalamud.Interface.Textures;
+using OpenerCreator.Helpers;
 using LuminaAction = Lumina.Excel.GeneratedSheets.Action;
 
-namespace OpenerCreator.Helpers;
+namespace OpenerCreator.Actions;
 
-
-public interface IActionManager
+public class PvEActions : IActionManager
 {
-    string GetActionName(uint action);
-    bool SameActionsByName(string action1, uint action2);
-    static uint CatchAllActionId => 0;
-    static string OldActionName => "Old Action";
-    static ISharedImmediateTexture GetUnknownActionTexture =>
-        OpenerCreator.TextureProvider.GetFromGame("ui/icon/000000/000786_hr1.tex");
-}
-
-public class Actions : IActionManager
-{
-    private static Actions? SingletonInstance;
+    private static PvEActions? SingletonInstance;
     private static readonly object LockObject = new();
     private readonly IEnumerable<LuminaAction> actionsSheet;
     private readonly Dictionary<uint, LuminaAction> actionsSheetDictionary;
+    private readonly IEnumerable<GroupOfActions> groupOfActions;
 
-    private Actions()
+    private PvEActions()
     {
         var pve = OpenerCreator.DataManager.GetExcelSheet<LuminaAction>()!
                                .Where(IsPvEAction).ToList();
         actionsSheetDictionary = pve.ToDictionary(a => a.RowId);
         actionsSheet = pve;
+        groupOfActions = new[]
+        {
+            new GroupOfActions(
+                "Dancer Steps",
+                "lmao",
+                new List<uint> { 1, 2, 3, 4, 5 },
+                true
+                ),
+        };
     }
 
-    public static Actions Instance
+    public static PvEActions Instance
     {
         get
         {
@@ -39,7 +39,7 @@ public class Actions : IActionManager
             {
                 lock (LockObject)
                 {
-                    SingletonInstance ??= new Actions();
+                    SingletonInstance ??= new PvEActions();
                 }
             }
 
@@ -49,6 +49,10 @@ public class Actions : IActionManager
 
     public string GetActionName(uint id)
     {
+        if (id == 0)
+        {
+            return IActionManager.CatchAllActionName;
+        }
         return actionsSheetDictionary.GetValueOrDefault(id)?.Name.ToString() ?? IActionManager.OldActionName;
     }
 
@@ -62,15 +66,10 @@ public class Actions : IActionManager
         return actionsSheet.Select(a => a.RowId).Where(id => id != 0).ToList();
     }
 
-    public LuminaAction GetAction(uint id)
-    {
-        return actionsSheetDictionary[id];
-    }
+    public LuminaAction GetAction(uint id) => actionsSheetDictionary[id];
 
-    public ushort? GetActionIcon(uint id)
-    {
-        return actionsSheetDictionary.GetValueOrDefault(id)?.Icon;
-    }
+    public ushort? GetActionIcon(uint id) => actionsSheetDictionary.GetValueOrDefault(id)?.Icon;
+    
 
     public List<uint> GetNonRepeatedActionsByName(string name, Jobs job)
     {

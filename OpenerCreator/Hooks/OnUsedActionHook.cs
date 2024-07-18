@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Dalamud.Hooking;
 using Lumina.Excel;
+using OpenerCreator.Actions;
 using OpenerCreator.Helpers;
 using OpenerCreator.Managers;
 using LuminaAction = Lumina.Excel.GeneratedSheets.Action;
@@ -90,7 +91,7 @@ public class UsedActionHook : IDisposable
 
         var actionId = (uint)Marshal.ReadInt32(effectHeader, 0x8);
         var action = sheet!.GetRow(actionId);
-        if (action != null && Actions.IsPvEAction(action))
+        if (action != null && PvEActions.IsPvEAction(action))
         {
             if (nActions == 0) // opener not defined
             {
