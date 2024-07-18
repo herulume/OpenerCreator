@@ -18,6 +18,7 @@ public class OpenerCreatorWindow : Window, IDisposable
 {
     private static readonly Vector2 IconSize = new(32);
     private static readonly Vector2 CountdownNumberSize = new(240, 320);
+    private static bool countdown;
     private readonly ISharedImmediateTexture countdownGo;
     private readonly ISharedImmediateTexture countdownNumbers;
 
@@ -97,6 +98,7 @@ public class OpenerCreatorWindow : Window, IDisposable
         DrawRecordActionsTab();
         DrawSettingsTab();
         ImGui.EndTabBar();
+
         DrawCountdown();
     }
 
@@ -353,6 +355,9 @@ public class OpenerCreatorWindow : Window, IDisposable
             return;
 
         ImGui.BeginChild("settings");
+        ImGui.BeginGroup();
+        ImGui.Text("Countdown");
+        ImGui.Checkbox("Enable countdown", ref countdown);
 
         if (ImGui.InputInt("Countdown timer", ref OpenerCreator.Config.CountdownTime))
         {
@@ -360,14 +365,16 @@ public class OpenerCreatorWindow : Window, IDisposable
             OpenerCreator.Config.Save();
         }
 
+        ImGui.EndGroup();
         ImGui.EndChild();
         ImGui.EndTabItem();
     }
 
     private void DrawCountdown()
     {
-        if (countdownStart == null || OpenerCreator.ClientState.LocalPlayer!.StatusFlags.ToString()
-                                                   .Contains(StatusFlags.InCombat.ToString()))
+        if (countdown == false || countdownStart == null ||
+            OpenerCreator.ClientState.LocalPlayer!.StatusFlags.ToString()
+                         .Contains(StatusFlags.InCombat.ToString()))
             return;
 
         var drawlist = ImGui.GetForegroundDrawList();
