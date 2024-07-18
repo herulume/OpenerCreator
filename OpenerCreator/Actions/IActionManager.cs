@@ -5,7 +5,7 @@ namespace OpenerCreator.Actions;
 public interface IActionManager
 {
     static uint CatchAllActionId => 0;
-    static string CatchAllActionName => "Catch All";
+    static string CatchAllActionName => "Catch-All Action";
     static string OldActionName => "Old Action";
 
     static ISharedImmediateTexture GetUnknownActionTexture =>
