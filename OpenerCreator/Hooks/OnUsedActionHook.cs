@@ -47,7 +47,7 @@ public class UsedActionHook : IDisposable
 
     public void StartRecording(int cd, Action<Feedback> provideFeedbackAction, Action<int> wrongActionAction)
     {
-        if (usedActionHook!.IsEnabled)
+        if (usedActionHook?.IsEnabled ?? true)
             return;
 
         provideFeedback = provideFeedbackAction;
@@ -58,7 +58,7 @@ public class UsedActionHook : IDisposable
 
     public void StopRecording()
     {
-        if (!usedActionHook!.IsEnabled)
+        if (!(usedActionHook?.IsEnabled ?? false))
             return;
 
         usedActionHook?.Disable();
@@ -68,7 +68,7 @@ public class UsedActionHook : IDisposable
 
     private void Compare()
     {
-        if (!usedActionHook!.IsEnabled)
+        if (!(usedActionHook?.IsEnabled ?? false))
             return;
 
         usedActionHook?.Disable();

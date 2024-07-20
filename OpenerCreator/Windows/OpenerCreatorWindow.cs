@@ -23,20 +23,17 @@ public class OpenerCreatorWindow : Window, IDisposable
         { JobCategory.MagicalRanged, false }
     };
 
-    private readonly Action<int, Action<Feedback>, Action<int>> startRecording;
-    private readonly Action stopRecording;
+    private readonly Recording recordingConfig;
     private readonly HashSet<int> wrongActions;
-    private int? actionDnd;
+    private int? actionDragAndDrop;
     private List<uint> actions;
 
     private Countdown countdown = new();
-    private List<string> feedback;
     private List<uint> filteredActions;
     private JobCategory jobCategoryFilter = JobCategory.None;
     private Jobs jobFilter;
 
     private string name;
-    private bool recording;
     private List<Tuple<Jobs, List<string>>> savedOpeners;
     private bool saveOpenerInvalidConfig;
     private string search;
@@ -55,15 +52,12 @@ public class OpenerCreatorWindow : Window, IDisposable
         name = "";
         search = "";
         jobFilter = Jobs.ANY;
-        recording = false;
-        feedback = [];
         actions = [];
         savedOpeners = OpenerManager.Instance.GetNames();
         filteredActions = PvEActions.Instance.NonRepeatedIdList();
         wrongActions = [];
 
-        this.startRecording = startRecording;
-        this.stopRecording = stopRecording;
+        recordingConfig = new Recording(startRecording, stopRecording);
     }
 
     public void Dispose()
@@ -99,7 +93,7 @@ public class OpenerCreatorWindow : Window, IDisposable
             ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
 
         int? dndTarget = null;
-        if (actionDnd != null)
+        if (actionDragAndDrop != null)
         {
             var pos = ImGui.GetMousePos() - ImGui.GetCursorScreenPos();
             var x = (int)Math.Floor(pos.X / (IconSize.X + spacing.X));
@@ -108,7 +102,7 @@ public class OpenerCreatorWindow : Window, IDisposable
         }
 
         int? delete = null;
-        for (var i = 0; i < actions.Count + (actionDnd == null ? 0 : 1); i++)
+        for (var i = 0; i < actions.Count + (actionDragAndDrop == null ? 0 : 1); i++)
         {
             if (i > 0)
             {
@@ -117,12 +111,13 @@ public class OpenerCreatorWindow : Window, IDisposable
                     ImGui.NewLine();
             }
 
-            if ((dndTarget <= actionDnd && dndTarget == i) || (dndTarget > actionDnd && dndTarget == i - 1))
+            if ((dndTarget <= actionDragAndDrop && dndTarget == i) ||
+                (dndTarget > actionDragAndDrop && dndTarget == i - 1))
             {
-                ImGui.Image(GetIcon(actions[actionDnd!.Value]), IconSize, Vector2.Zero, Vector2.One,
+                ImGui.Image(GetIcon(actions[actionDragAndDrop!.Value]), IconSize, Vector2.Zero, Vector2.One,
                             new Vector4(255, 255, 255, 100));
 
-                if (actionDnd != i)
+                if (actionDragAndDrop != i)
                 {
                     ImGui.SameLine();
                     if (ImGui.GetContentRegionAvail().X < IconSize.X)
@@ -130,12 +125,12 @@ public class OpenerCreatorWindow : Window, IDisposable
                 }
             }
 
-            if (actionDnd != i && i < actions.Count)
+            if (actionDragAndDrop != i && i < actions.Count)
             {
                 var color = wrongActions.Contains(i) ? new Vector4(255, 0, 0, 255) : new Vector4(255, 255, 255, 255);
                 ImGui.Image(GetIcon(actions[i]), IconSize, Vector2.Zero, Vector2.One, color);
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
-                    actionDnd = i;
+                    actionDragAndDrop = i;
 
                 if (ImGui.IsItemHovered())
                     ImGui.SetTooltip(PvEActions.Instance.GetActionName(actions[i]));
@@ -148,30 +143,30 @@ public class OpenerCreatorWindow : Window, IDisposable
             actions.RemoveAt(delete.Value);
 
         // Handle dnd
-        if (actionDnd != null)
+        if (actionDragAndDrop != null)
         {
             var pos = ImGui.GetMousePos();
             var drawlist = ImGui.GetWindowDrawList();
-            drawlist.PushTextureID(GetIcon(actions[actionDnd.Value]));
+            drawlist.PushTextureID(GetIcon(actions[actionDragAndDrop.Value]));
             drawlist.PrimReserve(6, 4);
             drawlist.PrimRectUV(pos, pos + IconSize, Vector2.Zero, Vector2.One, 0xFFFFFFFF);
             drawlist.PopTextureID();
 
             if (!ImGui.IsMouseDown(ImGuiMouseButton.Left))
             {
-                if (dndTarget < actionDnd)
+                if (dndTarget < actionDragAndDrop)
                 {
-                    var action = actions[actionDnd.Value];
-                    actions.RemoveAt(actionDnd.Value);
+                    var action = actions[actionDragAndDrop.Value];
+                    actions.RemoveAt(actionDragAndDrop.Value);
                     actions.Insert(dndTarget.Value, action);
                 }
-                else if (dndTarget > actionDnd)
+                else if (dndTarget > actionDragAndDrop)
                 {
-                    actions.Insert(dndTarget.Value + 1, actions[actionDnd.Value]);
-                    actions.RemoveAt(actionDnd.Value);
+                    actions.Insert(dndTarget.Value + 1, actions[actionDragAndDrop.Value]);
+                    actions.RemoveAt(actionDragAndDrop.Value);
                 }
 
-                actionDnd = null;
+                actionDragAndDrop = null;
             }
         }
 
@@ -274,7 +269,7 @@ public class OpenerCreatorWindow : Window, IDisposable
         ImGui.SameLine();
         if (ImGui.Button("Add catch-all action")) actions.Add(0);
         ImGui.SameLine();
-        DrawClear();
+        DrawClearActionsAndFeedback();
         ImGui.SameLine();
         DrawSaveOpener();
 
@@ -305,28 +300,29 @@ public class OpenerCreatorWindow : Window, IDisposable
         ImGui.Spacing();
         if (ImGui.Button("Start Recording"))
         {
-            feedback.Clear();
             wrongActions.Clear();
-            recording = true;
             countdown.StartCountdown();
-            startRecording(OpenerCreator.Config.CountdownTime, AddFeedback, WrongAction);
+            recordingConfig.StartRecording(OpenerCreator.Config.CountdownTime, AddFeedback, WrongAction);
+            OpenerCreator.PluginLog.Info($"Is recording? {recordingConfig.IsRecording()}");
         }
 
         ImGui.SameLine();
         if (ImGui.Button("Stop Recording"))
         {
-            recording = false;
             countdown.StopCountdown();
-            stopRecording();
+            recordingConfig.StopRecording();
         }
 
-        if (recording)
+        ImGui.SameLine();
+        if (ImGui.Button("Clear Feedback")) recordingConfig.ClearFeedback();
+
+        if (recordingConfig.IsRecording())
         {
             ImGui.SameLine();
             ImGui.Text("RECORDING");
         }
 
-        foreach (var line in feedback) ImGui.Text(line);
+        foreach (var line in recordingConfig.GetFeedback()) ImGui.Text(line);
 
         ImGui.EndChild();
         ImGui.EndTabItem();
@@ -360,12 +356,12 @@ public class OpenerCreatorWindow : Window, IDisposable
         ImGui.EndTabItem();
     }
 
-    private void DrawClear()
+    private void DrawClearActionsAndFeedback()
     {
         if (ImGui.Button("Clear Actions"))
         {
             actions.Clear();
-            feedback.Clear();
+            recordingConfig.ClearFeedback();
             wrongActions.Clear();
         }
     }
@@ -428,8 +424,8 @@ public class OpenerCreatorWindow : Window, IDisposable
     public void AddFeedback(Feedback f)
     {
         countdown.StopCountdown();
-        recording = false;
-        feedback = f.GetMessages();
+        recordingConfig.StopRecording();
+        recordingConfig.AddFeedback(f.GetMessages());
     }
 
     private static nint GetIcon(uint id)
