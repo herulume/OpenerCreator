@@ -39,6 +39,6 @@ internal class Recording(Action<int, Action<Feedback>, Action<int>> startRecordi
 
     internal IEnumerable<string> GetFeedback()
     {
-        return new List<string>(feedback);
+        return [..feedback];
     }
 }
