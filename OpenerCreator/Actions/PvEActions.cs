@@ -58,7 +58,7 @@ public class PvEActions : IActionManager
         return GetActionName(aId).Contains(name, StringComparison.CurrentCultureIgnoreCase);
     }
 
-    public List<uint> NonRepeatedIdList()
+    public List<uint> ActionsIdList()
     {
         return actionsSheet.Select(a => a.RowId).Where(id => id != 0).ToList();
     }
@@ -80,10 +80,12 @@ public class PvEActions : IActionManager
                .AsParallel()
                .Where(a =>
                           a.Name.ToString().Contains(name, StringComparison.CurrentCultureIgnoreCase)
-                          && (a.ClassJobCategory.Value!.Name.ToString().Contains(job.ToString()) || job == Jobs.ANY)
+                          && ((a.ClassJobCategory?.Value?.Name != null
+                               && a.ClassJobCategory.Value.Name.ToString().Contains(job.ToString()))
+                              || job == Jobs.ANY)
                )
                .Select(a => a.RowId)
-               .Order()
+               .OrderBy(id => id)
                .ToList();
     }
 
