@@ -41,7 +41,7 @@ internal struct Countdown()
         var foregroundDrawList = ImGui.GetForegroundDrawList();
         var timer = OpenerCreator.Config.CountdownTime - (countdownStart.ElapsedMilliseconds / 1000.0f);
         var ceil = (float)Math.Ceiling(timer);
-        const float uspacing = 1.0f / 6.0f;
+        const float uSpacing = 1.0f / 6.0f;
 
         ceil = timer switch
         {
@@ -71,8 +71,8 @@ internal struct Countdown()
             case <= 5:
                 foregroundDrawList.AddImage(countdownNumbers.GetWrapOrEmpty().ImGuiHandle,
                                             center - (CountdownNumberSize / 2),
-                                            center + (CountdownNumberSize / 2), new Vector2(ceil * uspacing, 0.0f),
-                                            new Vector2((ceil * uspacing) + uspacing, 1.0f), color);
+                                            center + (CountdownNumberSize / 2), new Vector2(ceil * uSpacing, 0.0f),
+                                            new Vector2((ceil * uSpacing) + uSpacing, 1.0f), color);
                 break;
             default:
             {
@@ -81,14 +81,14 @@ internal struct Countdown()
                 foregroundDrawList.AddImage(countdownNumbers.GetWrapOrEmpty().ImGuiHandle,
                                             center - CountdownNumberSize with { Y = CountdownNumberSize.Y / 2 },
                                             center + new Vector2(0.0f, CountdownNumberSize.Y / 2),
-                                            new Vector2(dig1 * uspacing, 0.0f),
-                                            new Vector2((dig1 * uspacing) + uspacing, 1.0f),
+                                            new Vector2(dig1 * uSpacing, 0.0f),
+                                            new Vector2((dig1 * uSpacing) + uSpacing, 1.0f),
                                             color);
                 foregroundDrawList.AddImage(countdownNumbers.GetWrapOrEmpty().ImGuiHandle,
                                             center - new Vector2(0.0f, CountdownNumberSize.Y / 2),
                                             center + CountdownNumberSize with { Y = CountdownNumberSize.Y / 2 },
-                                            new Vector2(dig2 * uspacing, 0.0f),
-                                            new Vector2((dig2 * uspacing) + uspacing, 1.0f),
+                                            new Vector2(dig2 * uSpacing, 0.0f),
+                                            new Vector2((dig2 * uSpacing) + uSpacing, 1.0f),
                                             color);
                 break;
             }

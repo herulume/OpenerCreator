@@ -13,7 +13,6 @@ public class OpenerCreatorWindow : Window, IDisposable
 {
     private static readonly Vector2 IconSize = new(32);
 
-    // ImGUI state helpers
     private readonly Dictionary<JobCategory, bool> jobRoleFilterColour = new()
     {
         { JobCategory.Tank, false },
@@ -23,19 +22,16 @@ public class OpenerCreatorWindow : Window, IDisposable
         { JobCategory.MagicalRanged, false }
     };
 
-    // Loaded Actions
     private readonly LoadedActions loadedActions = new();
 
-    // Recording related
     private readonly Recording recordingConfig;
     private int? actionDragAndDrop;
-    private Countdown countdown = new();
 
-    // Need to investigate
-    private List<uint> filteredActions = PvEActions.Instance.NonRepeatedIdList();
+    private List<uint> actionsIds = PvEActions.Instance.ActionsIdList();
+    private Countdown countdown = new();
+    private List<Tuple<Jobs, List<string>>> customOpeners = OpenerManager.Instance.GetNames();
     private JobCategory jobCategoryFilter = JobCategory.None;
     private Jobs jobFilter = Jobs.ANY;
-    private List<Tuple<Jobs, List<string>>> savedOpeners = OpenerManager.Instance.GetNames();
     private bool saveOpenerInvalidConfig;
     private string searchAction = "";
 
@@ -175,13 +171,13 @@ public class OpenerCreatorWindow : Window, IDisposable
         if (!ImGui.BeginTabItem("Loader"))
             return;
 
-        ImGui.BeginChild("loadopener");
+        ImGui.BeginChild("###LoadOpeners");
         var defaultOpeners = OpenerManager.Instance.GetDefaultNames();
-        savedOpeners = OpenerManager.Instance.GetNames();
+        customOpeners = OpenerManager.Instance.GetNames();
 
-        ImGui.BeginTabBar("OpenerCreatorLoaderTabBar");
+        ImGui.BeginTabBar("###DefaultAndCustomTab");
         DrawOpeners(defaultOpeners, "Default", OpenerManager.Instance.GetDefaultOpener);
-        DrawOpeners(savedOpeners, "Saved", OpenerManager.Instance.GetOpener, true);
+        DrawOpeners(customOpeners, "Saved", OpenerManager.Instance.GetOpener, true);
         ImGui.EndTabBar();
 
         ImGui.EndChild();
@@ -234,7 +230,7 @@ public class OpenerCreatorWindow : Window, IDisposable
         if (!ImGui.BeginTabItem("Creator"))
             return;
 
-        ImGui.BeginChild("allactions",
+        ImGui.BeginChild("###AllActions",
                          new Vector2(0, ImGui.GetContentRegionAvail().Y - ImGui.GetStyle().WindowPadding.Y));
 
         ImGui.InputText("Opener name", ref loadedActions.Name, 32);
@@ -246,7 +242,7 @@ public class OpenerCreatorWindow : Window, IDisposable
                 if (ImGui.Selectable(job.ToString()))
                 {
                     jobFilter = job;
-                    filteredActions = PvEActions.Instance.GetNonRepeatedActionsByName(searchAction, jobFilter);
+                    actionsIds = PvEActions.Instance.GetNonRepeatedActionsByName(searchAction, jobFilter);
                 }
 
             ImGui.EndCombo();
@@ -255,12 +251,12 @@ public class OpenerCreatorWindow : Window, IDisposable
         // Search bar
         if (ImGui.InputText("Search", ref searchAction, 32))
         {
-            filteredActions = searchAction.Length > 0
-                                  ? PvEActions.Instance.GetNonRepeatedActionsByName(searchAction, jobFilter)
-                                  : PvEActions.Instance.NonRepeatedIdList();
+            actionsIds = searchAction.Length > 0
+                             ? PvEActions.Instance.GetNonRepeatedActionsByName(searchAction, jobFilter)
+                             : PvEActions.Instance.ActionsIdList();
         }
 
-        ImGui.Text($"{filteredActions.Count} Results");
+        ImGui.Text($"{actionsIds.Count} Results");
         ImGui.SameLine();
         if (ImGui.Button("Add catch-all action")) loadedActions.AddAction(0);
         ImGui.SameLine();
@@ -268,12 +264,12 @@ public class OpenerCreatorWindow : Window, IDisposable
         ImGui.SameLine();
         DrawSaveOpener();
 
-        for (var i = 0; i < Math.Min(20, filteredActions.Count); i++)
+        for (var i = 0; i < Math.Min(20, actionsIds.Count); i++)
         {
-            var action = PvEActions.Instance.GetAction(filteredActions[i]);
-            if (ImGui.ImageButton(GetIcon(filteredActions[i]), IconSize))
+            var action = PvEActions.Instance.GetAction(actionsIds[i]);
+            if (ImGui.ImageButton(GetIcon(actionsIds[i]), IconSize))
             {
-                loadedActions.AddAction(filteredActions[i]);
+                loadedActions.AddAction(actionsIds[i]);
                 OpenerManager.Instance.Loaded = loadedActions.GetActionsByRef();
             }
 
@@ -290,7 +286,7 @@ public class OpenerCreatorWindow : Window, IDisposable
         if (!ImGui.BeginTabItem("Record Actions"))
             return;
 
-        ImGui.BeginChild("recordactions");
+        ImGui.BeginChild("###RecordActions");
         ImGui.Text("Start a countdown, record your actions and compare them with your opener.");
         ImGui.Spacing();
         if (ImGui.Button("Start Recording"))
@@ -333,7 +329,7 @@ public class OpenerCreatorWindow : Window, IDisposable
         if (!ImGui.BeginTabItem("Settings"))
             return;
 
-        ImGui.BeginChild("settings");
+        ImGui.BeginChild("###Settings");
         ImGui.BeginGroup();
         CollapsingHeader("Countdown", () =>
         {
