@@ -18,7 +18,8 @@ public class PvEActions : IActionManager
     private PvEActions()
     {
         var pve = OpenerCreator.DataManager.GetExcelSheet<LuminaAction>()!
-                               .Where(IsPvEAction).ToList();
+                               .Where(IsPvEAction)
+                               .ToList();
         actionsSheetDictionary = pve.ToDictionary(a => a.RowId);
         actionsSheet = pve;
         groupOfActions = new[]
@@ -30,6 +31,8 @@ public class PvEActions : IActionManager
             )
         };
     }
+
+    public static uint TrueNorthId => 7546;
 
     public static PvEActions Instance
     {
@@ -49,8 +52,9 @@ public class PvEActions : IActionManager
 
     public string GetActionName(uint id)
     {
-        if (id == 0) return IActionManager.CatchAllActionName;
-        return actionsSheetDictionary.GetValueOrDefault(id)?.Name.ToString() ?? IActionManager.OldActionName;
+        return id == IActionManager.CatchAllActionId
+                   ? IActionManager.CatchAllActionName
+                   : actionsSheetDictionary.GetValueOrDefault(id)?.Name.ToString() ?? IActionManager.OldActionName;
     }
 
     public bool SameActionsByName(string name, uint aId)
@@ -58,9 +62,12 @@ public class PvEActions : IActionManager
         return GetActionName(aId).Contains(name, StringComparison.CurrentCultureIgnoreCase);
     }
 
-    public List<uint> ActionsIdList()
+    public List<uint> ActionsIdList(ActionTypes actionType)
     {
-        return actionsSheet.Select(a => a.RowId).Where(id => id != 0).ToList();
+        return actionsSheet
+               .Where(a => ActionTypesExtension.GetType(a) == actionType || actionType == ActionTypes.ANY)
+               .Select(a => a.RowId)
+               .ToList();
     }
 
     public LuminaAction GetAction(uint id)
@@ -70,16 +77,19 @@ public class PvEActions : IActionManager
 
     public ushort? GetActionIcon(uint id)
     {
-        return actionsSheetDictionary.GetValueOrDefault(id)?.Icon;
+        return id == IActionManager.CatchAllActionId
+                   ? IActionManager.GetCatchAllIcon
+                   : actionsSheetDictionary.GetValueOrDefault(id)?.Icon;
     }
 
 
-    public List<uint> GetNonRepeatedActionsByName(string name, Jobs job)
+    public List<uint> GetNonRepeatedActionsByName(string name, Jobs job, ActionTypes actionType)
     {
         return actionsSheet
                .AsParallel()
                .Where(a =>
                           a.Name.ToString().Contains(name, StringComparison.CurrentCultureIgnoreCase)
+                          && (ActionTypesExtension.GetType(a) == actionType || actionType == ActionTypes.ANY)
                           && ((a.ClassJobCategory?.Value?.Name != null
                                && a.ClassJobCategory.Value.Name.ToString().Contains(job.ToString()))
                               || job == Jobs.ANY)
@@ -91,11 +101,9 @@ public class PvEActions : IActionManager
 
     public static bool IsPvEAction(LuminaAction a)
     {
-        return a.RowId == 0 ||                               // 0 is used as a catch-all action
-               (a.ActionCategory.Row is 2 or 3 or 4          // GCD or Weaponskill or oGCD
-                && a is { IsPvP: false, ClassJobLevel: > 0 } // not an old action
-                && a.ClassJobCategory.Row != 0               // not an old action
-               );
+        return a.ActionCategory.Row is 2 or 3 or 4          // GCD or Weaponskill or oGCD
+               && a is { IsPvP: false, ClassJobLevel: > 0 } // not an old action
+               && a.ClassJobCategory.Row != 0;              // not an old action
     }
 
     public static ISharedImmediateTexture GetIconTexture(uint id)

@@ -6,7 +6,7 @@ using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Interface.Textures;
 using ImGuiNET;
 
-namespace OpenerCreator.Windows;
+namespace OpenerCreator.Helpers;
 
 // here be dragons
 // ask Sevii

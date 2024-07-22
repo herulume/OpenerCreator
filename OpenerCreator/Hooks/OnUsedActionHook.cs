@@ -15,27 +15,23 @@ public class UsedActionHook : IDisposable
 {
     private const int MaxItemCount = 50;
 
-    private readonly ExcelSheet<LuminaAction>? sheet;
+    private readonly ExcelSheet<LuminaAction>? sheet = OpenerCreator.DataManager.GetExcelSheet<LuminaAction>();
     private readonly List<uint> used = new(MaxItemCount);
     private readonly Hook<UsedActionDelegate>? usedActionHook;
+    private bool ignoreTrueNorth;
 
     private int nActions;
-    private Action<Feedback> provideFeedback;
-    private Action<int> wrongAction;
+    private Action<Feedback> provideFeedback = _ => { };
+    private Action<int> wrongAction = _ => { };
 
     public UsedActionHook()
     {
-        sheet = OpenerCreator.DataManager.GetExcelSheet<LuminaAction>();
-
         // credits to Tischel for the original sig
         // https://github.com/Tischel/ActionTimeline/blob/master/ActionTimeline/Helpers/TimelineManager.cs
         usedActionHook = OpenerCreator.GameInteropProvider.HookFromSignature<UsedActionDelegate>(
             "40 55 56 57 41 54 41 55 41 56 48 8D AC 24",
             DetourUsedAction
         );
-        nActions = 0;
-        provideFeedback = _ => { };
-        wrongAction = _ => { };
     }
 
     public void Dispose()
@@ -45,15 +41,16 @@ public class UsedActionHook : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    public void StartRecording(int cd, Action<Feedback> provideFeedbackAction, Action<int> wrongActionAction)
+    public void StartRecording(int cd, Action<Feedback> provideFeedbackA, Action<int> wrongActionA, bool ignoreTn)
     {
         if (usedActionHook?.IsEnabled ?? true)
             return;
 
-        provideFeedback = provideFeedbackAction;
-        wrongAction = wrongActionAction;
+        provideFeedback = provideFeedbackA;
+        wrongAction = wrongActionA;
         usedActionHook?.Enable();
         nActions = OpenerManager.Instance.Loaded.Count;
+        ignoreTrueNorth = ignoreTn;
     }
 
     public void StopRecording()
@@ -87,7 +84,9 @@ public class UsedActionHook : IDisposable
 
         var actionId = (uint)Marshal.ReadInt32(effectHeader, 0x8);
         var action = sheet!.GetRow(actionId);
-        if (action != null && PvEActions.IsPvEAction(action))
+        var isActionTrueNorth = actionId == PvEActions.TrueNorthId;
+        var analyseWhenTrueNorth = !(ignoreTrueNorth && isActionTrueNorth); //nand
+        if (action != null && PvEActions.IsPvEAction(action) && analyseWhenTrueNorth)
         {
             if (nActions == 0) // Opener not defined or fully processed
             {

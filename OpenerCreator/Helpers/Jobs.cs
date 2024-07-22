@@ -52,6 +52,15 @@ public enum JobCategory
 
 public static class JobsExtensions
 {
+    public static string PrettyPrint(this Jobs job)
+    {
+        return job switch
+        {
+            Jobs.ANY => "Any",
+            _ => job.ToString()
+        };
+    }
+
     public static JobCategory GetCategory(this Jobs job)
     {
         return job switch
