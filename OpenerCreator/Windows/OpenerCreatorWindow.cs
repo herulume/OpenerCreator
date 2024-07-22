@@ -27,7 +27,8 @@ public class OpenerCreatorWindow : Window, IDisposable
     private readonly Recording recordingConfig;
     private int? actionDragAndDrop;
 
-    private List<uint> actionsIds = PvEActions.Instance.ActionsIdList();
+    private List<uint> actionsIds;
+    private ActionTypes actionTypeFilter = ActionTypes.ANY;
     private Countdown countdown = new();
     private List<Tuple<Jobs, List<string>>> customOpeners = OpenerManager.Instance.GetNames();
     private JobCategory jobCategoryFilter = JobCategory.None;
@@ -45,6 +46,7 @@ public class OpenerCreatorWindow : Window, IDisposable
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
 
+        actionsIds = PvEActions.Instance.ActionsIdList(actionTypeFilter);
         recordingConfig = new Recording(startRecording, stopRecording);
     }
 
@@ -235,25 +237,16 @@ public class OpenerCreatorWindow : Window, IDisposable
 
         ImGui.InputText("Opener name", ref loadedActions.Name, 32);
 
-        //  Filter by job
-        if (ImGui.BeginCombo("Job Filter", jobFilter.ToString()))
-        {
-            foreach (Jobs job in Enum.GetValues(typeof(Jobs)))
-                if (ImGui.Selectable(job.ToString()))
-                {
-                    jobFilter = job;
-                    actionsIds = PvEActions.Instance.GetNonRepeatedActionsByName(searchAction, jobFilter);
-                }
-
-            ImGui.EndCombo();
-        }
+        ListFilter("Job filter", jobFilter, JobsExtensions.PrettyPrint, ref jobFilter);
+        ListFilter("Action type filter", actionTypeFilter, ActionTypesExtension.PrettyPrint, ref actionTypeFilter);
 
         // Search bar
         if (ImGui.InputText("Search", ref searchAction, 32))
         {
             actionsIds = searchAction.Length > 0
-                             ? PvEActions.Instance.GetNonRepeatedActionsByName(searchAction, jobFilter)
-                             : PvEActions.Instance.ActionsIdList();
+                             ? PvEActions.Instance.GetNonRepeatedActionsByName(
+                                 searchAction, jobFilter, actionTypeFilter)
+                             : PvEActions.Instance.ActionsIdList(actionTypeFilter);
         }
 
         ImGui.Text($"{actionsIds.Count} Results");
@@ -428,6 +421,22 @@ public class OpenerCreatorWindow : Window, IDisposable
         countdown.StopCountdown();
         recordingConfig.StopRecording();
         recordingConfig.AddFeedback(f.GetMessages());
+    }
+
+    public void ListFilter<TA>(string label, TA filter, Func<TA, String> prettyPrint, ref TA state) where TA : Enum
+    {
+        if (ImGui.BeginCombo(label, prettyPrint(filter)))
+        {
+            foreach (TA value in Enum.GetValues(typeof(TA)))
+                if (ImGui.Selectable(prettyPrint(value)))
+                {
+                    state = value;
+                    actionsIds =
+                        PvEActions.Instance.GetNonRepeatedActionsByName(searchAction, jobFilter, actionTypeFilter);
+                }
+
+            ImGui.EndCombo();
+        }
     }
 
     private static nint GetIcon(uint id)
