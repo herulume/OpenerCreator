@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using Dalamud.Interface.Windowing;
-using Dalamud.Utility;
 using ImGuiNET;
 using OpenerCreator.Actions;
 using OpenerCreator.Helpers;
@@ -14,7 +13,8 @@ public class OpenerCreatorWindow : Window, IDisposable
 {
     private static readonly Vector2 IconSize = new(32);
 
-    private readonly Dictionary<JobCategory, bool> currentColor = new()
+    // ImGUI state helpers
+    private readonly Dictionary<JobCategory, bool> jobRoleFilterColour = new()
     {
         { JobCategory.Tank, false },
         { JobCategory.Healer, false },
@@ -23,21 +23,21 @@ public class OpenerCreatorWindow : Window, IDisposable
         { JobCategory.MagicalRanged, false }
     };
 
+    // Loaded Actions
     private readonly LoadedActions loadedActions = new();
 
+    // Recording related
     private readonly Recording recordingConfig;
     private int? actionDragAndDrop;
-
     private Countdown countdown = new();
-    private List<uint> filteredActions;
+
+    // Need to investigate
+    private List<uint> filteredActions = PvEActions.Instance.NonRepeatedIdList();
     private JobCategory jobCategoryFilter = JobCategory.None;
-    private Jobs jobFilter;
-
-    private string name;
-    private List<Tuple<Jobs, List<string>>> savedOpeners;
+    private Jobs jobFilter = Jobs.ANY;
+    private List<Tuple<Jobs, List<string>>> savedOpeners = OpenerManager.Instance.GetNames();
     private bool saveOpenerInvalidConfig;
-    private string search;
-
+    private string searchAction = "";
 
     public OpenerCreatorWindow(Action<int, Action<Feedback>, Action<int>> startRecording, Action stopRecording)
         : base("Opener Creator###ocrt", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
@@ -48,12 +48,6 @@ public class OpenerCreatorWindow : Window, IDisposable
             MinimumSize = new Vector2(100, 100),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
-
-        name = "";
-        search = "";
-        jobFilter = Jobs.ANY;
-        savedOpeners = OpenerManager.Instance.GetNames();
-        filteredActions = PvEActions.Instance.NonRepeatedIdList();
 
         recordingConfig = new Recording(startRecording, stopRecording);
     }
@@ -147,11 +141,11 @@ public class OpenerCreatorWindow : Window, IDisposable
         if (actionDragAndDrop != null)
         {
             var pos = ImGui.GetMousePos();
-            var drawlist = ImGui.GetWindowDrawList();
-            drawlist.PushTextureID(GetIcon(loadedActions.GetActionAt(actionDragAndDrop.Value)));
-            drawlist.PrimReserve(6, 4);
-            drawlist.PrimRectUV(pos, pos + IconSize, Vector2.Zero, Vector2.One, 0xFFFFFFFF);
-            drawlist.PopTextureID();
+            var drawList = ImGui.GetWindowDrawList();
+            drawList.PushTextureID(GetIcon(loadedActions.GetActionAt(actionDragAndDrop.Value)));
+            drawList.PrimReserve(6, 4);
+            drawList.PrimRectUV(pos, pos + IconSize, Vector2.Zero, Vector2.One, 0xFFFFFFFF);
+            drawList.PopTextureID();
 
             if (!ImGui.IsMouseDown(ImGuiMouseButton.Left))
             {
@@ -243,7 +237,7 @@ public class OpenerCreatorWindow : Window, IDisposable
         ImGui.BeginChild("allactions",
                          new Vector2(0, ImGui.GetContentRegionAvail().Y - ImGui.GetStyle().WindowPadding.Y));
 
-        ImGui.InputText("Opener name", ref name, 32);
+        ImGui.InputText("Opener name", ref loadedActions.Name, 32);
 
         //  Filter by job
         if (ImGui.BeginCombo("Job Filter", jobFilter.ToString()))
@@ -252,17 +246,17 @@ public class OpenerCreatorWindow : Window, IDisposable
                 if (ImGui.Selectable(job.ToString()))
                 {
                     jobFilter = job;
-                    filteredActions = PvEActions.Instance.GetNonRepeatedActionsByName(search, jobFilter);
+                    filteredActions = PvEActions.Instance.GetNonRepeatedActionsByName(searchAction, jobFilter);
                 }
 
             ImGui.EndCombo();
         }
 
         // Search bar
-        if (ImGui.InputText("Search", ref search, 32))
+        if (ImGui.InputText("Search", ref searchAction, 32))
         {
-            filteredActions = search.Length > 0
-                                  ? PvEActions.Instance.GetNonRepeatedActionsByName(search, jobFilter)
+            filteredActions = searchAction.Length > 0
+                                  ? PvEActions.Instance.GetNonRepeatedActionsByName(searchAction, jobFilter)
                                   : PvEActions.Instance.NonRepeatedIdList();
         }
 
@@ -341,23 +335,26 @@ public class OpenerCreatorWindow : Window, IDisposable
 
         ImGui.BeginChild("settings");
         ImGui.BeginGroup();
-        ImGui.Text("Countdown");
-        ImGui.Checkbox("Enable countdown", ref OpenerCreator.Config.IsCountdownEnabled);
-
-        if (ImGui.InputInt("Countdown timer", ref OpenerCreator.Config.CountdownTime))
+        CollapsingHeader("Countdown", () =>
         {
-            OpenerCreator.Config.CountdownTime = Math.Clamp(OpenerCreator.Config.CountdownTime, 0, 30);
-            OpenerCreator.Config.Save();
-        }
+            ImGui.Checkbox("Enable countdown", ref OpenerCreator.Config.IsCountdownEnabled);
 
+            if (ImGui.InputInt("Countdown timer", ref OpenerCreator.Config.CountdownTime))
+            {
+                OpenerCreator.Config.CountdownTime = Math.Clamp(OpenerCreator.Config.CountdownTime, 0, 30);
+                OpenerCreator.Config.Save();
+            }
+        });
         ImGui.EndGroup();
-
         ImGui.Spacing();
         ImGui.BeginGroup();
-        ImGui.Text("Action Recording");
-        ImGui.Checkbox("Stop recording at first mistake", ref OpenerCreator.Config.StopAtFirstMistake);
+        CollapsingHeader("Action Recording",
+                         () =>
+                         {
+                             ImGui.Checkbox("Stop recording at first mistake",
+                                            ref OpenerCreator.Config.StopAtFirstMistake);
+                         });
         ImGui.EndGroup();
-
         ImGui.EndChild();
         ImGui.EndTabItem();
     }
@@ -376,9 +373,9 @@ public class OpenerCreatorWindow : Window, IDisposable
     {
         if (ImGui.Button("Save Opener"))
         {
-            if (jobFilter != Jobs.ANY && !name.IsNullOrEmpty())
+            if (jobFilter != Jobs.ANY && loadedActions.HasName())
             {
-                OpenerManager.Instance.AddOpener(name, jobFilter, loadedActions.GetActionsByRef());
+                OpenerManager.Instance.AddOpener(loadedActions.Name, jobFilter, loadedActions.GetActionsByRef());
                 OpenerManager.Instance.SaveOpeners();
                 saveOpenerInvalidConfig = false;
             }
@@ -408,14 +405,14 @@ public class OpenerCreatorWindow : Window, IDisposable
 
         void DrawJobCategoryToggle(string label, JobCategory jobCategory)
         {
-            var active = currentColor[jobCategory];
+            var active = jobRoleFilterColour[jobCategory];
             if (active)
                 ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.TabActive]);
 
             if (ImGui.Button(label))
             {
                 jobCategoryFilter = JobsExtensions.Toggle(jobCategoryFilter, jobCategory);
-                currentColor[jobCategory] = !active;
+                jobRoleFilterColour[jobCategory] = !active;
             }
 
             if (active) ImGui.PopStyleColor(1);

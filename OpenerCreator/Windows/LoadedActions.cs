@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Dalamud.Utility;
 
 namespace OpenerCreator.Windows;
 
@@ -6,6 +7,8 @@ internal class LoadedActions
 {
     private readonly HashSet<int> wrongActionsIndex = [];
     private List<uint> actions = [];
+    public string Name = ""; // needs to be public for ImGui refs
+
 
     internal bool IsWrongActionAt(int i)
     {
@@ -60,5 +63,10 @@ internal class LoadedActions
     internal void AddActionsByRef(List<uint> l)
     {
         actions = l;
+    }
+
+    internal bool HasName()
+    {
+        return !Name.IsNullOrEmpty();
     }
 }
