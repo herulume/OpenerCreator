@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Dalamud.Utility;
 using OpenerCreator.Actions;
 
-namespace OpenerCreator.Windows;
+namespace OpenerCreator.Helpers;
 
 internal class LoadedActions
 {

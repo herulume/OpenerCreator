@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
-using OpenerCreator.Helpers;
 
-namespace OpenerCreator.Windows;
+namespace OpenerCreator.Helpers;
 
 internal class Recording(Action<int, Action<Feedback>, Action<int>, bool> startRecording, Action stopRecording)
 {
