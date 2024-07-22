@@ -4,7 +4,7 @@ using OpenerCreator.Helpers;
 
 namespace OpenerCreator.Windows;
 
-internal class Recording(Action<int, Action<Feedback>, Action<int>> startRecording, Action stopRecording)
+internal class Recording(Action<int, Action<Feedback>, Action<int>, bool> startRecording, Action stopRecording)
 {
     private readonly List<string> feedback = [];
     private bool recording;
@@ -15,11 +15,12 @@ internal class Recording(Action<int, Action<Feedback>, Action<int>> startRecordi
         stopRecording();
     }
 
-    internal void StartRecording(int countdownTime, Action<Feedback> addFeedback, Action<int> indexWrongAction)
+    internal void StartRecording(
+        int countdownTime, Action<Feedback> addFeedback, Action<int> indexWrongAction, bool ignoreTrueNorth)
     {
         feedback.Clear();
         recording = true;
-        startRecording(countdownTime, addFeedback, indexWrongAction);
+        startRecording(countdownTime, addFeedback, indexWrongAction, ignoreTrueNorth);
     }
 
     internal bool IsRecording()

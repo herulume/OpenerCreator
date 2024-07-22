@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Dalamud.Utility;
+using OpenerCreator.Actions;
 
 namespace OpenerCreator.Windows;
 
@@ -68,5 +69,10 @@ internal class LoadedActions
     internal bool HasName()
     {
         return !Name.IsNullOrEmpty();
+    }
+
+    public bool HasTrueNorth()
+    {
+        return actions.Contains(PvEActions.TrueNorthId);
     }
 }

@@ -31,6 +31,8 @@ public class PvEActions : IActionManager
         };
     }
 
+    public static uint TrueNorthId => 7546;
+
     public static PvEActions Instance
     {
         get

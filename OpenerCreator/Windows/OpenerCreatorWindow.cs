@@ -35,7 +35,7 @@ public class OpenerCreatorWindow : Window, IDisposable
     private bool saveOpenerInvalidConfig;
     private string searchAction = "";
 
-    public OpenerCreatorWindow(Action<int, Action<Feedback>, Action<int>> startRecording, Action stopRecording)
+    public OpenerCreatorWindow(Action<int, Action<Feedback>, Action<int>, bool> startRecording, Action stopRecording)
         : base("Opener Creator###ocrt", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
         ForceMainWindow = true; // Centre countdown
@@ -258,7 +258,12 @@ public class OpenerCreatorWindow : Window, IDisposable
 
         ImGui.Text($"{actionsIds.Count} Results");
         ImGui.SameLine();
-        if (ImGui.Button("Add catch-all action")) loadedActions.AddAction(0);
+        if (ImGui.Button("Add catch-all action"))
+        {
+            loadedActions.AddAction(0);
+            OpenerManager.Instance.Loaded = loadedActions.GetActionsByRef();
+        }
+
         ImGui.SameLine();
         DrawClearActionsAndFeedback();
         ImGui.SameLine();
@@ -287,14 +292,15 @@ public class OpenerCreatorWindow : Window, IDisposable
             return;
 
         ImGui.BeginChild("###RecordActions");
-        ImGui.Text("Start a countdown, record your actions and compare them with your opener.");
+        ImGui.Text("Start a countdown, record your actions and compare them with your opener");
         ImGui.Spacing();
         if (ImGui.Button("Start Recording"))
         {
             loadedActions.ClearWrongActions();
             countdown.StartCountdown();
             recordingConfig.StartRecording(OpenerCreator.Config.CountdownTime, AddFeedback,
-                                           loadedActions.AddWrongActionAt);
+                                           loadedActions.AddWrongActionAt,
+                                           OpenerCreator.Config.IgnoreTrueNorth && !loadedActions.HasTrueNorth());
             OpenerCreator.PluginLog.Info($"Is recording? {recordingConfig.IsRecording()}");
         }
 
@@ -349,6 +355,8 @@ public class OpenerCreatorWindow : Window, IDisposable
                          {
                              ImGui.Checkbox("Stop recording at first mistake",
                                             ref OpenerCreator.Config.StopAtFirstMistake);
+                             ImGui.Checkbox("Ignore True North if it isn't present on the opener.",
+                                            ref OpenerCreator.Config.IgnoreTrueNorth);
                          });
         ImGui.EndGroup();
         ImGui.EndChild();
