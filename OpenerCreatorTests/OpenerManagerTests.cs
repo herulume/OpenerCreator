@@ -138,4 +138,51 @@ public class OpenerManagerTests
         Assert.Equal(1, (int)errors);
         Assert.Contains("in action 2", string.Join("\n", feedback.GetMessages()));
     }
+
+    [Fact]
+    public void Compare_WithGroupAction_ShouldSucceed()
+    {
+        // Arrange
+        var openerManager = new OpenerManager(new ActionsMock())
+        {
+            Loaded = [2, -1, 1, -1, -1]
+        };
+        var used = new List<int> { 2, 15999, 1, 16000, 15999 };
+        var feedback = new Feedback();
+        uint errors = 0;
+
+        // Act
+        openerManager.Compare(used, f => { feedback = f; }, _ => { errors++; });
+
+        // Assert
+        var errorMessages = feedback.GetList()
+                                    .Where(m => m.Item1 == Feedback.MessageType.Error);
+        Assert.Single(feedback.GetList());
+        Assert.Empty(errorMessages);
+        Assert.Equal(0, (int)errors);
+    }
+
+    [Fact]
+    public void Compare_WithGroupActionAndWrongAction_ShouldFail()
+    {
+        // Arrange
+        var openerManager = new OpenerManager(new ActionsMock())
+        {
+            Loaded = [2, -1, 1, -1, -1]
+        };
+        var used = new List<int> { 2, 15999, 1, 1, 15999 };
+        var feedback = new Feedback();
+        uint errors = 0;
+
+        // Act
+        openerManager.Compare(used, f => { feedback = f; }, _ => { errors++; });
+
+        // Assert
+        var errorMessages = feedback.GetList()
+                                    .Where(m => m.Item1 == Feedback.MessageType.Error);
+        Assert.Single(feedback.GetList());
+        Assert.Single(errorMessages);
+        Assert.Equal(1, (int)errors);
+        Assert.Contains("in action 4", string.Join("\n", feedback.GetMessages()));
+    }
 }
