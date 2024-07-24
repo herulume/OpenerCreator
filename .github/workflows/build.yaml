@@ -1,0 +1,39 @@
+name: Staging Build
+
+on:
+  workflow_dispatch:
+    inputs: {}
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '.github/**'
+      - '*.yml'
+      - '*.json'
+      - 'README.md'
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+  
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x.x'
+      - name: Restore dependencies
+        run: |
+          dotnet restore
+      - name: Download Dalamud
+        run: |
+          Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/stg/latest.zip -OutFile latest.zip
+          Expand-Archive -Force latest.zip "$env:AppData\XIVLauncher\addon\Hooks\dev\"
+      - name: Build
+        run: |
+          dotnet build --no-restore --configuration Release
