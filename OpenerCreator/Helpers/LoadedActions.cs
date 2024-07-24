@@ -7,8 +7,8 @@ namespace OpenerCreator.Helpers;
 internal class LoadedActions
 {
     private readonly HashSet<int> wrongActionsIndex = [];
-    private List<uint> actions = [];
-    public string Name = ""; // needs to be public for ImGui refs
+    private List<int> actions = []; // int instead of uint until c# has tagged unions
+    public string Name = "";        // needs to be public for ImGui refs
 
 
     internal bool IsWrongActionAt(int i)
@@ -31,12 +31,12 @@ internal class LoadedActions
         return actions.Count;
     }
 
-    internal uint GetActionAt(int i)
+    internal int GetActionAt(int i)
     {
         return actions[i];
     }
 
-    internal void AddAction(uint action)
+    internal void AddAction(int action)
     {
         actions.Add(action);
     }
@@ -46,12 +46,12 @@ internal class LoadedActions
         actions.RemoveAt(i);
     }
 
-    internal void InsertActionAt(int i, uint action)
+    internal void InsertActionAt(int i, int action)
     {
         actions.Insert(i, action);
     }
 
-    internal List<uint> GetActionsByRef()
+    internal List<int> GetActionsByRef()
     {
         return actions;
     }
@@ -61,7 +61,7 @@ internal class LoadedActions
         actions.Clear();
     }
 
-    internal void AddActionsByRef(List<uint> l)
+    internal void AddActionsByRef(List<int> l)
     {
         actions = l;
     }
@@ -73,6 +73,6 @@ internal class LoadedActions
 
     public bool HasTrueNorth()
     {
-        return actions.Contains(PvEActions.TrueNorthId);
+        return actions.Contains((int)PvEActions.TrueNorthId);
     }
 }

@@ -27,7 +27,7 @@ public class OpenerCreatorWindow : Window, IDisposable
     private readonly Recording recordingConfig;
     private int? actionDragAndDrop;
 
-    private List<uint> actionsIds;
+    private List<int> actionsIds;
     private ActionTypes actionTypeFilter = ActionTypes.ANY;
     private Countdown countdown = new();
     private List<Tuple<Jobs, List<string>>> customOpeners = OpenerManager.Instance.GetNames();
@@ -126,7 +126,16 @@ public class OpenerCreatorWindow : Window, IDisposable
                     actionDragAndDrop = i;
 
                 if (ImGui.IsItemHovered())
-                    ImGui.SetTooltip(PvEActions.Instance.GetActionName(loadedActions.GetActionAt(i)));
+                {
+                    var actionAt = loadedActions.GetActionAt(i);
+                    if (actionAt < 0)
+                    {
+                        // TODO: Do something with action group ID
+                    }
+                    else
+                        ImGui.SetTooltip(PvEActions.Instance.GetActionName((uint)actionAt));
+                }
+
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                     delete = i;
             }
@@ -187,7 +196,7 @@ public class OpenerCreatorWindow : Window, IDisposable
     }
 
     private void DrawOpeners(
-        List<Tuple<Jobs, List<string>>> openers, string prefix, Func<string, Jobs, List<uint>> getOpener,
+        List<Tuple<Jobs, List<string>>> openers, string prefix, Func<string, Jobs, List<int>> getOpener,
         bool delete = false)
     {
         if (!ImGui.BeginTabItem($"{prefix} Openers"))
@@ -264,15 +273,25 @@ public class OpenerCreatorWindow : Window, IDisposable
 
         for (var i = 0; i < Math.Min(20, actionsIds.Count); i++)
         {
-            var action = PvEActions.Instance.GetAction(actionsIds[i]);
-            if (ImGui.ImageButton(GetIcon(actionsIds[i]), IconSize))
+            var actionId = actionsIds[i];
+            if (actionId < 0)
             {
-                loadedActions.AddAction(actionsIds[i]);
-                OpenerManager.Instance.Loaded = loadedActions.GetActionsByRef();
+                // TODO: Something With Groups
+                ImGui.SameLine();
+                ImGui.Text("GROUP NAME");
             }
+            else
+            {
+                var action = PvEActions.Instance.GetAction((uint)actionId);
+                if (ImGui.ImageButton(GetIcon(actionId), IconSize))
+                {
+                    loadedActions.AddAction(actionId);
+                    OpenerManager.Instance.Loaded = loadedActions.GetActionsByRef();
+                }
 
-            ImGui.SameLine();
-            ImGui.Text(action.Name.ToString());
+                ImGui.SameLine();
+                ImGui.Text($"{action.Name}");
+            }
         }
 
         ImGui.EndChild();
@@ -439,9 +458,9 @@ public class OpenerCreatorWindow : Window, IDisposable
         }
     }
 
-    private static nint GetIcon(uint id)
+    private static nint GetIcon(int id)
     {
-        return PvEActions.GetIconTexture(id).GetWrapOrEmpty().ImGuiHandle;
+        return id >= 0 ? PvEActions.GetIconTexture((uint)id).GetWrapOrEmpty().ImGuiHandle : 0;
     }
 
     private static void CollapsingHeader(string label, Action action)
