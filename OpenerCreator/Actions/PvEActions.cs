@@ -13,7 +13,6 @@ public class PvEActions : IActionManager
     private static readonly object LockObject = new();
     private readonly IEnumerable<LuminaAction> actionsSheet;
     private readonly Dictionary<uint, LuminaAction> actionsSheetDictionary;
-    private readonly IEnumerable<GroupOfActions> groupOfActions;
 
     private PvEActions()
     {
@@ -22,14 +21,6 @@ public class PvEActions : IActionManager
                                .ToList();
         actionsSheetDictionary = pve.ToDictionary(a => a.RowId);
         actionsSheet = pve;
-        groupOfActions = new[]
-        {
-            new GroupOfActions(
-                "Dancer Steps",
-                "lmao",
-                new List<uint> { 1, 2, 3, 4, 5 }
-            )
-        };
     }
 
     public static uint TrueNorthId => 7546;
@@ -62,11 +53,11 @@ public class PvEActions : IActionManager
         return GetActionName(aId).Contains(name, StringComparison.CurrentCultureIgnoreCase);
     }
 
-    public List<uint> ActionsIdList(ActionTypes actionType)
+    public List<int> ActionsIdList(ActionTypes actionType)
     {
         return actionsSheet
                .Where(a => ActionTypesExtension.GetType(a) == actionType || actionType == ActionTypes.ANY)
-               .Select(a => a.RowId)
+               .Select(a => (int)a.RowId)
                .ToList();
     }
 
@@ -83,7 +74,7 @@ public class PvEActions : IActionManager
     }
 
 
-    public List<uint> GetNonRepeatedActionsByName(string name, Jobs job, ActionTypes actionType)
+    public List<int> GetNonRepeatedActionsByName(string name, Jobs job, ActionTypes actionType)
     {
         return actionsSheet
                .AsParallel()
@@ -94,7 +85,7 @@ public class PvEActions : IActionManager
                                && a.ClassJobCategory.Value.Name.ToString().Contains(job.ToString()))
                               || job == Jobs.ANY)
                )
-               .Select(a => a.RowId)
+               .Select(a => (int)a.RowId)
                .OrderBy(id => id)
                .ToList();
     }

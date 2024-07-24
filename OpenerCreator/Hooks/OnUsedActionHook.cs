@@ -16,7 +16,7 @@ public class UsedActionHook : IDisposable
     private const int MaxItemCount = 50;
 
     private readonly ExcelSheet<LuminaAction>? sheet = OpenerCreator.DataManager.GetExcelSheet<LuminaAction>();
-    private readonly List<uint> used = new(MaxItemCount);
+    private readonly List<int> used = new(MaxItemCount);
     private readonly Hook<UsedActionDelegate>? usedActionHook;
     private bool ignoreTrueNorth;
 
@@ -82,8 +82,8 @@ public class UsedActionHook : IDisposable
         var player = OpenerCreator.ClientState.LocalPlayer;
         if (player == null || sourceId != player.EntityId) return;
 
-        var actionId = (uint)Marshal.ReadInt32(effectHeader, 0x8);
-        var action = sheet!.GetRow(actionId);
+        var actionId = Marshal.ReadInt32(effectHeader, 0x8);
+        var action = sheet!.GetRow((uint)actionId);
         var isActionTrueNorth = actionId == PvEActions.TrueNorthId;
         var analyseWhenTrueNorth = !(ignoreTrueNorth && isActionTrueNorth); //nand
         if (action != null && PvEActions.IsPvEAction(action) && analyseWhenTrueNorth)
@@ -98,7 +98,7 @@ public class UsedActionHook : IDisposable
             var loadedLength = OpenerManager.Instance.Loaded.Count;
             var index = loadedLength - nActions;
             var intendedAction = OpenerManager.Instance.Loaded[index];
-            var intendedName = PvEActions.Instance.GetActionName(intendedAction);
+            var intendedName = PvEActions.Instance.GetActionName((uint)intendedAction);
             if (OpenerCreator.Config.StopAtFirstMistake &&
                 !OpenerManager.Instance.AreActionsEqual(intendedAction, intendedName, actionId)
                )
@@ -107,7 +107,7 @@ public class UsedActionHook : IDisposable
                 var f = new Feedback();
                 f.AddMessage(
                     Feedback.MessageType.Error,
-                    $"Difference in action {index + 1}: Substituted {intendedName} for {PvEActions.Instance.GetActionName(actionId)}"
+                    $"Difference in action {index + 1}: Substituted {intendedName} for {PvEActions.Instance.GetActionName((uint)actionId)}"
                 );
                 provideFeedback(f);
                 StopRecording();

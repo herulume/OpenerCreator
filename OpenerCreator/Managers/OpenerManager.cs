@@ -12,8 +12,8 @@ public class OpenerManager(IActionManager actions)
 {
     private static OpenerManager? SingletonInstance;
     private static readonly object LockObject = new();
-    private readonly Dictionary<Jobs, Dictionary<string, List<uint>>> defaultOpeners = new();
-    private readonly Dictionary<Jobs, Dictionary<string, List<uint>>> openers = new();
+    private readonly Dictionary<Jobs, Dictionary<string, List<int>>> defaultOpeners = new();
+    private readonly Dictionary<Jobs, Dictionary<string, List<int>>> openers = new();
 
     private OpenerManager(IActionManager actions, ValueTuple _) : this(actions)
     {
@@ -23,7 +23,7 @@ public class OpenerManager(IActionManager actions)
                                                   "openers.json"));
     }
 
-    public List<uint> Loaded { get; set; } = [];
+    public List<int> Loaded { get; set; } = [];
     private string OpenersFile { get; init; } = "empty";
 
     public static OpenerManager Instance
@@ -42,15 +42,15 @@ public class OpenerManager(IActionManager actions)
         }
     }
 
-    public void AddOpener(string name, Jobs job, IEnumerable<uint> actions)
+    public void AddOpener(string name, Jobs job, IEnumerable<int> opener)
     {
         if (!openers.TryGetValue(job, out var value))
         {
-            value = new Dictionary<string, List<uint>>();
+            value = new Dictionary<string, List<int>>();
             openers[job] = value;
         }
 
-        value[name] = [..actions];
+        value[name] = [..opener];
     }
 
     public List<Tuple<Jobs, List<string>>> GetDefaultNames()
@@ -58,12 +58,12 @@ public class OpenerManager(IActionManager actions)
         return defaultOpeners.Select(x => Tuple.Create(x.Key, x.Value.Keys.ToList())).ToList();
     }
 
-    public List<uint> GetDefaultOpener(string name, Jobs job)
+    public List<int> GetDefaultOpener(string name, Jobs job)
     {
         return [..defaultOpeners[job][name]];
     }
 
-    public List<uint> GetOpener(string name, Jobs job)
+    public List<int> GetOpener(string name, Jobs job)
     {
         return [..openers[job][name]];
     }
@@ -82,7 +82,7 @@ public class OpenerManager(IActionManager actions)
         }
     }
 
-    public void Compare(List<uint> used, Action<Feedback> provideFeedback, Action<int> wrongAction)
+    public void Compare(List<int> used, Action<Feedback> provideFeedback, Action<int> wrongAction)
     {
         var feedback = new Feedback();
         used = used.Take(Loaded.Count).ToList();
@@ -106,7 +106,7 @@ public class OpenerManager(IActionManager actions)
             {
                 error = true;
                 feedback.AddMessage(Feedback.MessageType.Error,
-                                    $"Difference in action {i + 1}: Substituted {intended} for {actions.GetActionName(actual)}");
+                                    $"Difference in action {i + 1}: Substituted {intended} for {actions.GetActionName((uint)actual)}");
                 wrongAction(openerIndex);
 
                 if (ShouldShift(openerIndex, size, used[i])) shift++;
@@ -126,40 +126,42 @@ public class OpenerManager(IActionManager actions)
     }
 
     private bool AreActionsEqual(
-        IReadOnlyList<uint> used, int openerIndex, int usedIndex, out string intended, out uint actual)
+        IReadOnlyList<int> used, int openerIndex, int usedIndex, out string intended, out int actualId)
     {
         var intendedId = Loaded[openerIndex];
-        intended = actions.GetActionName(intendedId);
-        actual = used[usedIndex];
+        intended = actions.GetActionName((uint)intendedId);
+        actualId = used[usedIndex];
 
-        return AreActionsEqual(intendedId, intended, actual);
+        return AreActionsEqual(intendedId, intended, actualId);
     }
 
-    public bool AreActionsEqual(uint intendedId, string intendedName, uint actualId)
+    public bool AreActionsEqual(int intendedId, string intendedName, int actualId)
     {
+        if (intendedId < 0)
+            return GroupOfActions.DefaultGroups().First(g => g.HasId(intendedId)).IsMember((uint)actualId);
         return intendedId == actualId ||
                intendedId == IActionManager.CatchAllActionId ||
-               actions.SameActionsByName(intendedName, actualId);
+               actions.SameActionsByName(intendedName, (uint)actualId);
     }
 
-    private bool ShouldShift(int openerIndex, int size, uint usedValue)
+    private bool ShouldShift(int openerIndex, int size, int usedValue)
     {
-        var nextIntended = actions.GetActionName(Loaded[openerIndex]);
+        var nextIntended = actions.GetActionName((uint)Loaded[openerIndex]);
         return openerIndex + 1 < size &&
-               (Loaded[openerIndex + 1] == usedValue || actions.SameActionsByName(nextIntended, usedValue));
+               (Loaded[openerIndex + 1] == usedValue || actions.SameActionsByName(nextIntended, (uint)usedValue));
     }
 
-    private static Dictionary<Jobs, Dictionary<string, List<uint>>> LoadOpeners(string path)
+    private static Dictionary<Jobs, Dictionary<string, List<int>>> LoadOpeners(string path)
     {
         try
         {
             var jsonData = File.ReadAllText(path);
-            return JsonSerializer.Deserialize<Dictionary<Jobs, Dictionary<string, List<uint>>>>(jsonData)!;
+            return JsonSerializer.Deserialize<Dictionary<Jobs, Dictionary<string, List<int>>>>(jsonData)!;
         }
         catch (Exception e)
         {
             OpenerCreator.PluginLog.Error("Failed to load Openers", e);
-            return new Dictionary<Jobs, Dictionary<string, List<uint>>>();
+            return new Dictionary<Jobs, Dictionary<string, List<int>>>();
         }
     }
 
