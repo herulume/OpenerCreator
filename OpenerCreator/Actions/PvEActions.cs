@@ -26,7 +26,6 @@ public class PvEActions : IActionManager
         {
             new GroupOfActions(
                 "Dancer Steps",
-                "lmao",
                 new List<uint> { 1, 2, 3, 4, 5 }
             )
         };
