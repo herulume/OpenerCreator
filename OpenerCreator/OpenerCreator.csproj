@@ -16,7 +16,7 @@
     <PropertyGroup>
         <Authors>herulume, sevii</Authors>
         <Company></Company>
-        <Version>0.0.9</Version>
+        <Version>0.1.0</Version>
         <Description>Create your opener and practice with a striking dummy. Provides basic analysis.</Description>
         <Copyright></Copyright>
         <PackageProjectUrl>https://github.com/herulume/OpenerCreator</PackageProjectUrl>
