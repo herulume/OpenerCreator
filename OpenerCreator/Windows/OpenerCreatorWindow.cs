@@ -144,7 +144,7 @@ public class OpenerCreatorWindow : Window, IDisposable
                 {
                     if (actionAt >= 0)
                         ImGui.SetTooltip(PvEActions.Instance.GetActionName(actionAt));
-                    else if(GroupOfActions.TryGetDefault(actionAt, out var group))
+                    else if (GroupOfActions.TryGetDefault(actionAt, out var group))
                     {
                         // ImGui.SetTooltip($"{group.Name}");
                         ImGui.BeginTooltip();
@@ -292,7 +292,7 @@ public class OpenerCreatorWindow : Window, IDisposable
         {
             var actionId = actionsIds[i];
             DrawIcon(actionId, IconSize);
-            if(ImGui.IsItemClicked(ImGuiMouseButton.Left))
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             {
                 loadedActions.AddAction(actionId);
                 OpenerManager.Instance.Loaded = loadedActions.GetActionsByRef();
@@ -301,13 +301,13 @@ public class OpenerCreatorWindow : Window, IDisposable
             ImGui.SameLine();
             if (actionId >= 0)
                 ImGui.Text($"{PvEActions.Instance.GetAction((uint)actionId).Name}");
-            else if(GroupOfActions.TryGetDefault(actionId, out var group))
+            else if (GroupOfActions.TryGetDefault(actionId, out var group))
                 ImGui.Text($"{group.Name}");
             else
                 ImGui.Text($"Invalid action id ({actionId})");
         }
         
-        if(actionsIds.Count > 50)
+        if (actionsIds.Count > 50)
             ImGui.Text("More than 50 results, limiting results shown");
 
         ImGui.EndChild();
