@@ -13,6 +13,6 @@ public interface IActionManager
 
     static ushort GetCatchAllIcon => 405;
 
-    string GetActionName(uint action);
-    bool SameActionsByName(string action1, uint action2);
+    string GetActionName(int action);
+    bool SameActionsByName(string action1, int action2);
 }

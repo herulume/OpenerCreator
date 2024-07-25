@@ -98,7 +98,7 @@ public class UsedActionHook : IDisposable
             var loadedLength = OpenerManager.Instance.Loaded.Count;
             var index = loadedLength - nActions;
             var intendedAction = OpenerManager.Instance.Loaded[index];
-            var intendedName = PvEActions.Instance.GetActionName((uint)intendedAction);
+            var intendedName = PvEActions.Instance.GetActionName(intendedAction);
             if (OpenerCreator.Config.StopAtFirstMistake &&
                 !OpenerManager.Instance.AreActionsEqual(intendedAction, intendedName, actionId)
                )
@@ -107,7 +107,7 @@ public class UsedActionHook : IDisposable
                 var f = new Feedback();
                 f.AddMessage(
                     Feedback.MessageType.Error,
-                    $"Difference in action {index + 1}: Substituted {intendedName} for {PvEActions.Instance.GetActionName((uint)actionId)}"
+                    $"Difference in action {index + 1}: Substituted {intendedName} for {PvEActions.Instance.GetActionName(actionId)}"
                 );
                 provideFeedback(f);
                 StopRecording();

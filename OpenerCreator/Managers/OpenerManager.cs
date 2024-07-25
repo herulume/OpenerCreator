@@ -106,7 +106,7 @@ public class OpenerManager(IActionManager actions)
             {
                 error = true;
                 feedback.AddMessage(Feedback.MessageType.Error,
-                                    $"Difference in action {i + 1}: Substituted {intended} for {actions.GetActionName((uint)actual)}");
+                                    $"Difference in action {i + 1}: Substituted {intended} for {actions.GetActionName(actual)}");
                 wrongAction(openerIndex);
 
                 if (ShouldShift(openerIndex, size, used[i])) shift++;
@@ -129,7 +129,7 @@ public class OpenerManager(IActionManager actions)
         IReadOnlyList<int> used, int openerIndex, int usedIndex, out string intended, out int actualId)
     {
         var intendedId = Loaded[openerIndex];
-        intended = actions.GetActionName((uint)intendedId);
+        intended = actions.GetActionName(intendedId);
         actualId = used[usedIndex];
 
         return AreActionsEqual(intendedId, intended, actualId);
@@ -138,17 +138,17 @@ public class OpenerManager(IActionManager actions)
     public bool AreActionsEqual(int intendedId, string intendedName, int actualId)
     {
         if (intendedId < 0)
-            return GroupOfActions.DefaultGroups().First(g => g.HasId(intendedId)).IsMember((uint)actualId);
+            return GroupOfActions.DefaultGroups.First(g => g.HasId(intendedId)).IsMember((uint)actualId);
         return intendedId == actualId ||
                intendedId == IActionManager.CatchAllActionId ||
-               actions.SameActionsByName(intendedName, (uint)actualId);
+               actions.SameActionsByName(intendedName, actualId);
     }
 
     private bool ShouldShift(int openerIndex, int size, int usedValue)
     {
-        var nextIntended = actions.GetActionName((uint)Loaded[openerIndex]);
+        var nextIntended = actions.GetActionName(Loaded[openerIndex]);
         return openerIndex + 1 < size &&
-               (Loaded[openerIndex + 1] == usedValue || actions.SameActionsByName(nextIntended, (uint)usedValue));
+               (Loaded[openerIndex + 1] == usedValue || actions.SameActionsByName(nextIntended, usedValue));
     }
 
     private static Dictionary<Jobs, Dictionary<string, List<int>>> LoadOpeners(string path)
