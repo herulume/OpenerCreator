@@ -4,6 +4,4 @@ OpenerCreator is a Dalamud plugin that lets you create or import openers/re-open
 
 Default openers were taken from [The Balance](https://www.thebalanceffxiv.com/).
 
-> ⚠️ **This plugin is at an early stage. Bugs are to be expected.**
-
-Thank you [JetBrains](https://www.jetbrains.com/rider/) for your [open-source license](https://www.jetbrains.com/community/opensource/).
+Thank you [JetBrains](https://www.jetbrains.com/rider/) for the [open-source license](https://www.jetbrains.com/community/opensource/).
