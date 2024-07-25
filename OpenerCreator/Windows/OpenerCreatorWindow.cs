@@ -77,18 +77,21 @@ public class OpenerCreatorWindow : Window, IDisposable
         var iconsPerLine = (int)Math.Floor((ImGui.GetContentRegionAvail().X - (padding.X * 2.0) + spacing.X) /
                                            (IconSize.X + spacing.X));
         var lines = (float)Math.Max(Math.Ceiling(loadedActions.ActionsCount() / (float)iconsPerLine), 1);
-        
+
         var frameW = ImGui.GetContentRegionAvail().X;
         ImGui.BeginChildFrame(
             2426787,
-            new Vector2(frameW, (lines * (IconSize.Y * 1.7f + spacing.Y)) - spacing.Y + (padding.Y * 2)),
+            new Vector2(frameW, (lines * ((IconSize.Y * 1.7f) + spacing.Y)) - spacing.Y + (padding.Y * 2)),
             ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
 
         var drawList = ImGui.GetWindowDrawList();
         for (var i = 0; i < lines; i++)
         {
             var pos = ImGui.GetCursorScreenPos();
-            drawList.AddRectFilled(pos + new Vector2(0, IconSize.Y * 0.9f + i * (IconSize.Y * 1.7f + spacing.Y)), pos + new Vector2(frameW, IconSize.Y * 1.1f + i * (IconSize.Y * 1.7f + spacing.Y)), 0x64000000);
+            drawList.AddRectFilled(pos + new Vector2(0, (IconSize.Y * 0.9f) + (i * ((IconSize.Y * 1.7f) + spacing.Y))),
+                                   pos + new Vector2(
+                                       frameW, (IconSize.Y * 1.1f) + (i * ((IconSize.Y * 1.7f) + spacing.Y))),
+                                   0x64000000);
         }
 
         int? dndTarget = null;
@@ -96,7 +99,7 @@ public class OpenerCreatorWindow : Window, IDisposable
         {
             var pos = ImGui.GetMousePos() - ImGui.GetCursorScreenPos();
             var x = (int)Math.Floor(pos.X / (IconSize.X + spacing.X));
-            var y = (int)Math.Floor(pos.Y / (IconSize.Y * 1.7f + spacing.Y));
+            var y = (int)Math.Floor(pos.Y / ((IconSize.Y * 1.7f) + spacing.Y));
             dndTarget = Math.Clamp((y * iconsPerLine) + x, 0, loadedActions.ActionsCount() - 1);
         }
 
@@ -115,7 +118,7 @@ public class OpenerCreatorWindow : Window, IDisposable
             {
                 var actionAt = loadedActions.GetActionAt(actionDragAndDrop!.Value);
                 if (!PvEActions.Instance.IsActionOGCD(actionAt))
-                    ImGui.SetCursorPosY(ImGui.GetCursorPosY() + IconSize.Y * 0.5f);
+                    ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (IconSize.Y * 0.5f));
                 DrawIcon(actionAt, IconSize, 0x64FFFFFF);
 
                 if (actionDragAndDrop != i)
@@ -130,13 +133,13 @@ public class OpenerCreatorWindow : Window, IDisposable
             {
                 var actionAt = loadedActions.GetActionAt(i);
                 var color = loadedActions.IsWrongActionAt(i) ? 0xFF6464FF : 0xFFFFFFFF;
-                
-                ImGui.BeginChild((uint)i, new(IconSize.X, IconSize.Y * 1.7f));
+
+                ImGui.BeginChild((uint)i, new Vector2(IconSize.X, IconSize.Y * 1.7f));
                 if (!PvEActions.Instance.IsActionOGCD(actionAt))
-                    ImGui.SetCursorPosY(ImGui.GetCursorPosY() + IconSize.Y * 0.5f);
+                    ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (IconSize.Y * 0.5f));
                 DrawIcon(actionAt, IconSize, color);
                 ImGui.EndChild();
-                
+
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
                     actionDragAndDrop = i;
 
@@ -150,14 +153,13 @@ public class OpenerCreatorWindow : Window, IDisposable
                         ImGui.BeginTooltip();
                         ImGui.Text(group.Name);
                         ImGui.Indent();
-                        foreach(var action in group.Actions)
+                        foreach (var action in group.Actions)
                             ImGui.Text(PvEActions.Instance.GetActionName((int)action));
                         ImGui.Unindent();
                         ImGui.EndTooltip();
                     }
                     else
                         ImGui.SetTooltip($"Invalid action id ({actionAt})");
-                        
                 }
 
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
@@ -297,7 +299,7 @@ public class OpenerCreatorWindow : Window, IDisposable
                 loadedActions.AddAction(actionId);
                 OpenerManager.Instance.Loaded = loadedActions.GetActionsByRef();
             }
-            
+
             ImGui.SameLine();
             if (actionId >= 0)
                 ImGui.Text($"{PvEActions.Instance.GetAction((uint)actionId).Name}");
@@ -306,7 +308,7 @@ public class OpenerCreatorWindow : Window, IDisposable
             else
                 ImGui.Text($"Invalid action id ({actionId})");
         }
-        
+
         if (actionsIds.Count > 50)
             ImGui.Text("More than 50 results, limiting results shown");
 
@@ -452,10 +454,11 @@ public class OpenerCreatorWindow : Window, IDisposable
         }
     }
 
-    private static void DrawIcon(int id, Vector2 size, uint color = 0xFFFFFFFF, Vector2? pos = null) {
+    private static void DrawIcon(int id, Vector2 size, uint color = 0xFFFFFFFF, Vector2? pos = null)
+    {
         var realPos = pos ?? ImGui.GetCursorScreenPos();
         var drawList = pos == null ? ImGui.GetWindowDrawList() : ImGui.GetForegroundDrawList();
-        
+
         if (id >= 0)
         {
             drawList.PushTextureID(GetIcon((uint)id));
@@ -467,7 +470,7 @@ public class OpenerCreatorWindow : Window, IDisposable
         {
             // could do it the "proper" way of making an actual rectangle... or do this
             // will break if the group only contains a single action, but why use a group at that point??
-            var center = realPos + size / 2;
+            var center = realPos + (size / 2);
             var actionCount = group.Actions.Count();
             drawList.PushClipRect(realPos, realPos + size, true);
             for (var i = 0; i < actionCount; ++i)
@@ -475,16 +478,18 @@ public class OpenerCreatorWindow : Window, IDisposable
                 var action = group.Actions.ElementAt(i);
                 drawList.PushTextureID(GetIcon(action));
                 drawList.PrimReserve(6, 4);
-                
+
                 var vtx = (ushort)drawList._VtxCurrentIdx;
-                drawList.PrimWriteVtx(center, new(0.5f, 0.5f), color);
-                
+                drawList.PrimWriteVtx(center, new Vector2(0.5f, 0.5f), color);
+
                 for (var j = 0; j < 3; j++)
                 {
-                    (var s, var c) = MathF.SinCos((i - 1.0f + j * 0.5f) / actionCount * MathF.PI * 2.0f - MathF.PI / 4);
-                    drawList.PrimWriteVtx(center + new Vector2(s * size.X, c * size.Y), new(0.5f + s, 0.5f + c), color);
+                    var (s, c) =
+                        MathF.SinCos(((i - 1.0f + (j * 0.5f)) / actionCount * MathF.PI * 2.0f) - (MathF.PI / 4));
+                    drawList.PrimWriteVtx(center + new Vector2(s * size.X, c * size.Y), new Vector2(0.5f + s, 0.5f + c),
+                                          color);
                 }
-                
+
                 drawList.PrimWriteIdx((ushort)(vtx + 2));
                 drawList.PrimWriteIdx((ushort)(vtx + 1));
                 drawList.PrimWriteIdx(vtx);
@@ -492,6 +497,7 @@ public class OpenerCreatorWindow : Window, IDisposable
                 drawList.PrimWriteIdx((ushort)(vtx + 2));
                 drawList.PrimWriteIdx(vtx);
             }
+
             drawList.PopClipRect();
         }
         else
@@ -501,7 +507,7 @@ public class OpenerCreatorWindow : Window, IDisposable
             drawList.PrimRectUV(realPos, realPos + size, Vector2.Zero, Vector2.One, color);
             drawList.PopTextureID();
         }
-        
+
         if (pos == null)
             ImGui.Dummy(size);
     }

@@ -10,13 +10,13 @@ public class ActionsMock : IActionManager
 
     private readonly IEnumerable<int> oldActions = new[] { OldAction1 };
 
-    public string GetActionName(uint action)
+    public string GetActionName(int action)
     {
-        return oldActions.Contains((int)action) ? IActionManager.OldActionName : action.ToString();
+        return oldActions.Contains(action) ? IActionManager.OldActionName : action.ToString();
     }
 
 
-    public bool SameActionsByName(string action1, uint action2)
+    public bool SameActionsByName(string action1, int action2)
     {
         return GetActionName(action2).Contains(action1, StringComparison.CurrentCultureIgnoreCase);
     }
