@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Dalamud.Interface.Textures;
 using OpenerCreator.Helpers;
 
 namespace OpenerCreator.Actions;
@@ -26,35 +25,36 @@ public readonly struct GroupOfActions(int id, string name, Jobs job, IEnumerable
 
     public static bool TryGetDefault(int id, out GroupOfActions value)
     {
-    	foreach(var group in DefaultGroups)
-            if(group.Id == id)
+        foreach (var group in DefaultGroups)
+            if (group.Id == id)
             {
                 value = group;
                 return true;
             }
-        
-        value = new(0, "", Jobs.ANY, []);
+
+        value = new GroupOfActions(0, "", Jobs.ANY, []);
         return false;
     }
 
     public static List<int> GetFilteredGroups(string name, Jobs job, ActionTypes actionType)
     {
         return DefaultGroups
-            .AsParallel()
-            .Where(a =>
-                (name.Length == 0 || a.Name.Contains(name, StringComparison.CurrentCultureIgnoreCase))
-                && (job == a.Job || job == Jobs.ANY)
-                && ((actionType == ActionTypes.GCD && a.IsGCD)
-                    || (actionType == ActionTypes.OGCD && !a.IsGCD)
-                    || actionType == ActionTypes.ANY)
-            )
-            .Select(a => a.Id)
-            .OrderBy(id => id)
-            .ToList();
+               .AsParallel()
+               .Where(a =>
+                          (name.Length == 0 || a.Name.Contains(name, StringComparison.CurrentCultureIgnoreCase))
+                          && (job == a.Job || job == Jobs.ANY)
+                          && ((actionType == ActionTypes.GCD && a.IsGCD)
+                              || (actionType == ActionTypes.OGCD && !a.IsGCD)
+                              || actionType == ActionTypes.ANY)
+               )
+               .Select(a => a.Id)
+               .OrderBy(id => id)
+               .ToList();
     }
 
-    public static readonly GroupOfActions[] DefaultGroups = [
-        new(
+    public static readonly GroupOfActions[] DefaultGroups =
+    [
+        new GroupOfActions(
             -1,
             "Dancer Step",
             Jobs.DNC,
@@ -62,10 +62,10 @@ public readonly struct GroupOfActions(int id, string name, Jobs job, IEnumerable
                 15999, // Emboite
                 16000, // Entrechat
                 16001, // Jete
-                16002, // Pirouette
+                16002  // Pirouette
             ]
         ),
-        new(
+        new GroupOfActions(
             -2,
             "Mudra",
             Jobs.NIN,
@@ -75,37 +75,37 @@ public readonly struct GroupOfActions(int id, string name, Jobs job, IEnumerable
                 2261,  // Chi
                 18806, // Chi
                 2263,  // Jin
-                18807, // Jin
+                18807  // Jin
             ]
         ),
-        new(
+        new GroupOfActions(
             -3,
             "Refulgent Arrow Proc",
             Jobs.BRD,
             [
                 16495, // Burst Shot
-                7409,  // Refulgent Arrow
+                7409   // Refulgent Arrow
             ]
         ),
-        new(
+        new GroupOfActions(
             -4,
             "Verthunder/Veraero",
             Jobs.RDM,
             [
                 25855, // Verthunder III
-                25856, // Veraero III
+                25856  // Veraero III
             ]
         ),
-        new(
+        new GroupOfActions(
             -5,
             "Saber/Starfall Dance",
             Jobs.DNC,
             [
                 16005, // Saber Dance
-                25792, // Starfall Dance
+                25792  // Starfall Dance
             ]
         ),
-        new(
+        new GroupOfActions(
             -6,
             "Dancer Priority GCD",
             Jobs.DNC,
@@ -114,8 +114,8 @@ public readonly struct GroupOfActions(int id, string name, Jobs job, IEnumerable
                 25792, // Starfall Dance
                 36983, // Last Dance
                 15992, // Fountainfall
-                15991, // Reverse Cascade
+                15991  // Reverse Cascade
             ]
-        ),
+        )
     ];
 }
