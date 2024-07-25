@@ -41,14 +41,29 @@ public class PvEActions : IActionManager
         }
     }
 
-    public string GetActionName(uint id)
+    public bool IsActionOGCD(int id)
     {
-        return id == IActionManager.CatchAllActionId
-                   ? IActionManager.CatchAllActionName
-                   : actionsSheetDictionary.GetValueOrDefault(id)?.Name.ToString() ?? IActionManager.OldActionName;
+        return id >= 0
+            ? (id == IActionManager.CatchAllActionId
+                ? false
+                : actionsSheetDictionary.TryGetValue((uint)id, out var action)
+                    && ActionTypesExtension.GetType(action) == ActionTypes.OGCD)
+            : GroupOfActions.TryGetDefault(id, out var group)
+                && !group.IsGCD;
     }
 
-    public bool SameActionsByName(string name, uint aId)
+    public string GetActionName(int id)
+    {
+        return id >= 0
+            ? (id == IActionManager.CatchAllActionId
+                ? IActionManager.CatchAllActionName
+                : actionsSheetDictionary.GetValueOrDefault((uint)id)?.Name.ToString() ?? IActionManager.OldActionName)
+            : (GroupOfActions.TryGetDefault(id, out var group)
+                ? group.Name
+                : IActionManager.OldActionName);
+    }
+
+    public bool SameActionsByName(string name, int aId)
     {
         return GetActionName(aId).Contains(name, StringComparison.CurrentCultureIgnoreCase);
     }
