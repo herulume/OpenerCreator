@@ -65,6 +65,7 @@ public class OpenerCreatorWindow : Window, IDisposable
         DrawCreatorTab();
         DrawRecordActionsTab();
         DrawSettingsTab();
+        DrawInfoTab();
         ImGui.EndTabBar();
 
         countdown.DrawCountdown();
@@ -390,6 +391,18 @@ public class OpenerCreatorWindow : Window, IDisposable
                                             ref OpenerCreator.Config.IgnoreTrueNorth);
                          });
         ImGui.EndGroup();
+        ImGui.EndChild();
+        ImGui.EndTabItem();
+    }
+
+    private static void DrawInfoTab()
+    {
+        if (!ImGui.BeginTabItem("Info"))
+            return;
+
+        ImGui.Text("Supported actions' groups:");
+        foreach (var groupsName in GroupOfActions.GroupsNames) ImGui.Text($"- {groupsName}");
+        ImGui.BeginChild("###Info");
         ImGui.EndChild();
         ImGui.EndTabItem();
     }

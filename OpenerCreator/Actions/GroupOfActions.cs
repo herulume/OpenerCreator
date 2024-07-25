@@ -76,7 +76,8 @@ public readonly struct GroupOfActions(int id, string name, Jobs job, IEnumerable
                 18806, // Chi
                 2263,  // Jin
                 18807  // Jin
-            ]
+            ],
+            false
         ),
         new GroupOfActions(
             -3,
@@ -118,4 +119,6 @@ public readonly struct GroupOfActions(int id, string name, Jobs job, IEnumerable
             ]
         )
     ];
+
+    public static List<string> GroupsNames => DefaultGroups.Select(g => g.Name).ToList();
 }
