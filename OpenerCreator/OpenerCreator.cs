@@ -20,19 +20,23 @@ public sealed class OpenerCreator : IDalamudPlugin
 
         UsedActionHook = new UsedActionHook();
 
+        ConfigWindow = new ConfigWindow();
         OpenerCreatorWindow = new OpenerCreatorWindow(UsedActionHook.StartRecording, UsedActionHook.StopRecording);
+        WindowSystem.AddWindow(ConfigWindow);
         WindowSystem.AddWindow(OpenerCreatorWindow);
 
         PluginInterface.UiBuilder.Draw += WindowSystem.Draw;
-        PluginInterface.UiBuilder.OpenConfigUi += () => OpenerCreatorWindow.Toggle();
+        PluginInterface.UiBuilder.OpenConfigUi += () => ConfigWindow.Toggle();
         PluginInterface.UiBuilder.OpenMainUi += () => OpenerCreatorWindow.Toggle();
 
-        CommandManager.AddHandler(Command, new CommandInfo((_, _) => OpenerCreatorWindow.Toggle())
+        CommandManager.AddHandler(Command, new CommandInfo(OnCommand)
         {
             HelpMessage = "Create, save, and practice your openers."
         });
     }
 
+
+    private ConfigWindow ConfigWindow { get; init; }
     private OpenerCreatorWindow OpenerCreatorWindow { get; init; }
     private UsedActionHook UsedActionHook { get; init; }
     public static Configuration Config { get; set; } = null!;
@@ -62,6 +66,16 @@ public sealed class OpenerCreator : IDalamudPlugin
     {
         CommandManager.RemoveHandler(Command);
         UsedActionHook.Dispose();
+        WindowSystem.RemoveAllWindows();
+        ConfigWindow.Dispose();
         OpenerCreatorWindow.Dispose();
+    }
+
+    private void OnCommand(string command, string args)
+    {
+        if (args == "config")
+            ConfigWindow.Toggle();
+        else
+            OpenerCreatorWindow.Toggle();
     }
 }

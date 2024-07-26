@@ -8,8 +8,19 @@ internal class LoadedActions
 {
     private readonly HashSet<int> wrongActionsIndex = [];
     private List<int> actions = []; // int instead of uint until c# has tagged unions
-    public string Name = "";        // needs to be public for ImGui refs
+    private int currentAction = -1;
+    public string Name = ""; // needs to be public for ImGui refs
 
+    internal void UpdateCurrentAction(int i)
+    {
+        if (i >= 0 && i < actions.Count)
+            currentAction = i;
+    }
+
+    internal bool IsCurrentActionAt(int i)
+    {
+        return i == currentAction && isCurrentValid();
+    }
 
     internal bool IsWrongActionAt(int i)
     {
@@ -24,6 +35,7 @@ internal class LoadedActions
     internal void ClearWrongActions()
     {
         wrongActionsIndex.Clear();
+        currentAction = -1;
     }
 
     internal int ActionsCount()
@@ -59,6 +71,7 @@ internal class LoadedActions
     internal void ClearActions()
     {
         actions.Clear();
+        currentAction = -1;
     }
 
     internal void AddActionsByRef(List<int> l)
@@ -74,5 +87,10 @@ internal class LoadedActions
     public bool HasTrueNorth()
     {
         return actions.Contains((int)PvEActions.TrueNorthId);
+    }
+
+    private bool isCurrentValid()
+    {
+        return currentAction >= 0 && currentAction < actions.Count;
     }
 }
