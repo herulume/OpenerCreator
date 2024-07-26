@@ -37,7 +37,8 @@ public class OpenerCreatorWindow : Window, IDisposable
     private bool saveOpenerInvalidConfig;
     private string searchAction = "";
 
-    public OpenerCreatorWindow(Action<int, Action<Feedback>, Action<int>, bool> startRecording, Action stopRecording)
+    public OpenerCreatorWindow(
+        Action<int, Action<Feedback>, Action<int>, Action<int>, bool> startRecording, Action stopRecording)
         : base("Opener Creator###ocrt", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
         ForceMainWindow = true; // Centre countdown
@@ -64,7 +65,6 @@ public class OpenerCreatorWindow : Window, IDisposable
         DrawOpenerLoaderTab();
         DrawCreatorTab();
         DrawRecordActionsTab();
-        DrawSettingsTab();
         DrawInfoTab();
         ImGui.EndTabBar();
 
@@ -133,9 +133,11 @@ public class OpenerCreatorWindow : Window, IDisposable
             if (actionDragAndDrop != i && i < loadedActions.ActionsCount())
             {
                 var actionAt = loadedActions.GetActionAt(i);
-                var color = loadedActions.IsWrongActionAt(i) ? 0xFF6464FF : 0xFFFFFFFF;
+                var color = 0xFFFFFFFF;
+                if (loadedActions.IsCurrentActionAt(i)) color = 0xFFFF7F50;
+                if (loadedActions.IsWrongActionAt(i)) color = 0xFF6464FF;
 
-                ImGui.BeginChild((uint)i, new Vector2(IconSize.X, IconSize.Y * 1.7f));
+                ImGui.BeginChild((uint)i, IconSize with { Y = IconSize.Y * 1.7f });
                 if (!PvEActions.Instance.IsActionOGCD(actionAt))
                     ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (IconSize.Y * 0.5f));
                 DrawIcon(actionAt, IconSize, color);
@@ -229,7 +231,7 @@ public class OpenerCreatorWindow : Window, IDisposable
         foreach (var openerJob in openers)
             if (JobsExtensions.FilterBy(jobCategoryFilter, openerJob.Item1))
             {
-                CollapsingHeader($"{prefix} {openerJob.Item1} Openers", () =>
+                ImGuiHelpers.CollapsingHeader($"{prefix} {openerJob.Item1} Openers", () =>
                 {
                     foreach (var opener in openerJob.Item2)
                     {
@@ -329,8 +331,10 @@ public class OpenerCreatorWindow : Window, IDisposable
         {
             loadedActions.ClearWrongActions();
             countdown.StartCountdown();
-            recordingConfig.StartRecording(OpenerCreator.Config.CountdownTime, AddFeedback,
+            recordingConfig.StartRecording(OpenerCreator.Config.CountdownTime,
+                                           AddFeedback,
                                            loadedActions.AddWrongActionAt,
+                                           loadedActions.UpdateCurrentAction,
                                            OpenerCreator.Config.IgnoreTrueNorth && !loadedActions.HasTrueNorth());
             OpenerCreator.PluginLog.Info($"Is recording? {recordingConfig.IsRecording()}");
         }
@@ -358,39 +362,6 @@ public class OpenerCreatorWindow : Window, IDisposable
         foreach (var line in recordingConfig.GetFeedback())
             ImGui.Text(line);
 
-        ImGui.EndChild();
-        ImGui.EndTabItem();
-    }
-
-    private static void DrawSettingsTab()
-    {
-        if (!ImGui.BeginTabItem("Settings"))
-            return;
-
-        ImGui.BeginChild("###Settings");
-        ImGui.BeginGroup();
-        CollapsingHeader("Countdown", () =>
-        {
-            ImGui.Checkbox("Enable countdown", ref OpenerCreator.Config.IsCountdownEnabled);
-
-            if (ImGui.InputInt("Countdown timer", ref OpenerCreator.Config.CountdownTime))
-            {
-                OpenerCreator.Config.CountdownTime = Math.Clamp(OpenerCreator.Config.CountdownTime, 0, 30);
-                OpenerCreator.Config.Save();
-            }
-        });
-        ImGui.EndGroup();
-        ImGui.Spacing();
-        ImGui.BeginGroup();
-        CollapsingHeader("Action Recording",
-                         () =>
-                         {
-                             ImGui.Checkbox("Stop recording at first mistake",
-                                            ref OpenerCreator.Config.StopAtFirstMistake);
-                             ImGui.Checkbox("Ignore True North if it isn't present on the opener.",
-                                            ref OpenerCreator.Config.IgnoreTrueNorth);
-                         });
-        ImGui.EndGroup();
         ImGui.EndChild();
         ImGui.EndTabItem();
     }
@@ -551,10 +522,5 @@ public class OpenerCreatorWindow : Window, IDisposable
     private static nint GetIcon(uint id)
     {
         return PvEActions.GetIconTexture(id).GetWrapOrEmpty().ImGuiHandle;
-    }
-
-    private static void CollapsingHeader(string label, Action action)
-    {
-        if (ImGui.CollapsingHeader(label, ImGuiTreeNodeFlags.DefaultOpen)) action();
     }
 }

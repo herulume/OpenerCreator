@@ -18,11 +18,13 @@ public class UsedActionHook : IDisposable
     private readonly ExcelSheet<LuminaAction>? sheet = OpenerCreator.DataManager.GetExcelSheet<LuminaAction>();
     private readonly List<int> used = new(MaxItemCount);
     private readonly Hook<UsedActionDelegate>? usedActionHook;
+    private Action<int> currentIndex = _ => { };
     private bool ignoreTrueNorth;
 
     private int nActions;
     private Action<Feedback> provideFeedback = _ => { };
     private Action<int> wrongAction = _ => { };
+
 
     public UsedActionHook()
     {
@@ -41,13 +43,15 @@ public class UsedActionHook : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    public void StartRecording(int cd, Action<Feedback> provideFeedbackA, Action<int> wrongActionA, bool ignoreTn)
+    public void StartRecording(
+        int cd, Action<Feedback> provideFeedbackA, Action<int> wrongActionA, Action<int> currentIndexA, bool ignoreTn)
     {
         if (usedActionHook?.IsEnabled ?? true)
             return;
 
         provideFeedback = provideFeedbackA;
         wrongAction = wrongActionA;
+        currentIndex = currentIndexA;
         usedActionHook?.Enable();
         nActions = OpenerManager.Instance.Loaded.Count;
         ignoreTrueNorth = ignoreTn;
@@ -99,6 +103,9 @@ public class UsedActionHook : IDisposable
             var index = loadedLength - nActions;
             var intendedAction = OpenerManager.Instance.Loaded[index];
             var intendedName = PvEActions.Instance.GetActionName(intendedAction);
+
+            currentIndex(index);
+
             if (OpenerCreator.Config.StopAtFirstMistake &&
                 !OpenerManager.Instance.AreActionsEqual(intendedAction, intendedName, actionId)
                )
