@@ -23,6 +23,7 @@ public class UsedActionHook : IDisposable
 
     private int nActions;
     private Action<Feedback> provideFeedback = _ => { };
+    private Action<int> updateAbilityAnts = _ => { };
     private Action<int> wrongAction = _ => { };
 
 
@@ -44,7 +45,8 @@ public class UsedActionHook : IDisposable
     }
 
     public void StartRecording(
-        int cd, Action<Feedback> provideFeedbackA, Action<int> wrongActionA, Action<int> currentIndexA, bool ignoreTn)
+        int cd, Action<Feedback> provideFeedbackA, Action<int> wrongActionA, Action<int> currentIndexA, bool ignoreTn,
+        Action<int> updateAbilityAntsA)
     {
         if (usedActionHook?.IsEnabled ?? true)
             return;
@@ -55,6 +57,7 @@ public class UsedActionHook : IDisposable
         usedActionHook?.Enable();
         nActions = OpenerManager.Instance.Loaded.Count;
         ignoreTrueNorth = ignoreTn;
+        updateAbilityAnts = updateAbilityAntsA;
     }
 
     public void StopRecording()
@@ -102,6 +105,8 @@ public class UsedActionHook : IDisposable
             var loadedLength = OpenerManager.Instance.Loaded.Count;
             var index = loadedLength - nActions;
             var intendedAction = OpenerManager.Instance.Loaded[index];
+            if (index + 1 < OpenerManager.Instance.Loaded.Count)
+                updateAbilityAnts(OpenerManager.Instance.Loaded[index + 1]);
             var intendedName = PvEActions.Instance.GetActionName(intendedAction);
 
             currentIndex(index);

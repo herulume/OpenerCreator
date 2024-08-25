@@ -48,6 +48,9 @@ public class ConfigWindow : Window, IDisposable
                                           if (ImGui.Checkbox("Ignore True North if it isn't present on the opener.",
                                                              ref OpenerCreator.Config.IgnoreTrueNorth))
                                               OpenerCreator.Config.Save();
+                                          if (ImGui.Checkbox("Use ability ants for next opener action.",
+                                                             ref OpenerCreator.Config.AbilityAnts))
+                                              OpenerCreator.Config.Save();
                                       });
         ImGui.EndGroup();
     }

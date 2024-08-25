@@ -4,8 +4,12 @@ using System.Collections.Generic;
 namespace OpenerCreator.Helpers;
 
 internal class Recording(
-    Action<int, Action<Feedback>, Action<int>, Action<int>, bool> startRecording,
-    Action stopRecording)
+    Action<int, Action<Feedback>, Action<int>, Action<int>, bool, Action<int>> startRecording,
+    Action stopRecording,
+    Action enableAbilityAnts,
+    Action disableAbilityAnts,
+    Action<int> updateAbilityAnts
+)
 {
     private readonly List<string> feedback = [];
     private bool recording;
@@ -13,6 +17,7 @@ internal class Recording(
     internal void StopRecording()
     {
         recording = false;
+        disableAbilityAnts();
         stopRecording();
     }
 
@@ -22,7 +27,8 @@ internal class Recording(
     {
         feedback.Clear();
         recording = true;
-        startRecording(countdownTime, addFeedback, indexWrongAction, currentIndex, ignoreTrueNorth);
+        enableAbilityAnts();
+        startRecording(countdownTime, addFeedback, indexWrongAction, currentIndex, ignoreTrueNorth, updateAbilityAnts);
     }
 
     internal bool IsRecording()

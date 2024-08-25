@@ -6,6 +6,7 @@ namespace OpenerCreator;
 
 public class Configuration : IPluginConfiguration
 {
+    public bool AbilityAnts = true;
     public int CountdownTime = 7;
     public bool IgnoreTrueNorth = true;
     public bool IsCountdownEnabled = false;

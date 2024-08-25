@@ -18,10 +18,10 @@ public sealed class OpenerCreator : IDalamudPlugin
     {
         Config = Configuration.Load();
 
-        UsedActionHook = new UsedActionHook();
-
         ConfigWindow = new ConfigWindow();
-        OpenerCreatorWindow = new OpenerCreatorWindow(UsedActionHook.StartRecording, UsedActionHook.StopRecording);
+        OpenerCreatorWindow = new OpenerCreatorWindow(UsedActionHook.StartRecording, UsedActionHook.StopRecording,
+                                                      AbilityAntsHook.Enable, AbilityAntsHook.Disable,
+                                                      a => AbilityAntsHook.CurrentAction = a);
         WindowSystem.AddWindow(ConfigWindow);
         WindowSystem.AddWindow(OpenerCreatorWindow);
 
@@ -38,7 +38,8 @@ public sealed class OpenerCreator : IDalamudPlugin
 
     private ConfigWindow ConfigWindow { get; init; }
     private OpenerCreatorWindow OpenerCreatorWindow { get; init; }
-    private UsedActionHook UsedActionHook { get; init; }
+    private UsedActionHook UsedActionHook { get; init; } = new();
+    private AbilityAntsHook AbilityAntsHook { get; init; } = new();
     public static Configuration Config { get; set; } = null!;
 
     [PluginService]
@@ -69,6 +70,7 @@ public sealed class OpenerCreator : IDalamudPlugin
         WindowSystem.RemoveAllWindows();
         ConfigWindow.Dispose();
         OpenerCreatorWindow.Dispose();
+        AbilityAntsHook.Dispose();
     }
 
     private void OnCommand(string command, string args)

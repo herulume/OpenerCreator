@@ -38,7 +38,8 @@ public class OpenerCreatorWindow : Window, IDisposable
     private string searchAction = "";
 
     public OpenerCreatorWindow(
-        Action<int, Action<Feedback>, Action<int>, Action<int>, bool> startRecording, Action stopRecording)
+        Action<int, Action<Feedback>, Action<int>, Action<int>, bool, Action<int>> startRecording, Action stopRecording,
+        Action enableAbilityAnts, Action disableAbilityAnts, Action<int> updateAbilityAnts)
         : base("Opener Creator###ocrt", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
         ForceMainWindow = true; // Centre countdown
@@ -49,7 +50,8 @@ public class OpenerCreatorWindow : Window, IDisposable
         };
 
         actionsIds = PvEActions.Instance.ActionsIdList(actionTypeFilter);
-        recordingConfig = new Recording(startRecording, stopRecording);
+        recordingConfig = new Recording(startRecording, stopRecording, enableAbilityAnts, disableAbilityAnts,
+                                        updateAbilityAnts);
     }
 
     public void Dispose()
