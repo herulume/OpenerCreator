@@ -105,7 +105,7 @@ public class UsedActionHook : IDisposable
             var loadedLength = OpenerManager.Instance.Loaded.Count;
             var index = loadedLength - nActions;
             var intendedAction = OpenerManager.Instance.Loaded[index];
-            if (index + 1 < OpenerManager.Instance.Loaded.Count)
+            if (index + 1 < OpenerManager.Instance.Loaded.Count && OpenerCreator.Config.AbilityAnts)
                 updateAbilityAnts(OpenerManager.Instance.Loaded[index + 1]);
             var intendedName = PvEActions.Instance.GetActionName(intendedAction);
 
