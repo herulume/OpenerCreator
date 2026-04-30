@@ -37,8 +37,8 @@
       },
       "DalamudPackager": {
         "type": "Transitive",
-        "resolved": "14.0.1",
-        "contentHash": "y0WWyUE6dhpGdolK3iKgwys05/nZaVf4ZPtIjpLhJBZvHxkkiE23zYRo7K7uqAgoK/QvK5cqF6l3VG5AbgC6KA=="
+        "resolved": "15.0.0",
+        "contentHash": "411vwC8/X8Z/sQ2TI6v3SvOn66xFPeOjFn3Zn+h0d3Ox2t1kFm66AhDvmx/qcMwVrR+Hidxj0dadpQ2dgyXMBQ=="
       },
       "Microsoft.CodeCoverage": {
         "type": "Transitive",
@@ -107,7 +107,7 @@
       "openercreator": {
         "type": "Project",
         "dependencies": {
-          "DalamudPackager": "[14.0.1, )"
+          "DalamudPackager": "[15.0.0, )"
         }
       }
     }

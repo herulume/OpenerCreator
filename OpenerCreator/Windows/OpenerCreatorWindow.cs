@@ -102,7 +102,7 @@ public class OpenerCreatorWindow : Window, IDisposable
         var lines = (float)Math.Max(Math.Ceiling(loadedActions.ActionsCount() / (float)iconsPerLine), 1);
 
         var frameW = ImGui.GetContentRegionAvail().X;
-        using var childFrame = Helper.ChildFrame(2426787, new Vector2(frameW, (lines * ((IconSize.Y * 1.7f) + spacing.Y)) - spacing.Y + (padding.Y * 2)), ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        using var childFrame = ImRaii.ChildFrame(2426787, new Vector2(frameW, (lines * ((IconSize.Y * 1.7f) + spacing.Y)) - spacing.Y + (padding.Y * 2)), ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
         if (!childFrame.Success)
             return;
 
@@ -175,7 +175,7 @@ public class OpenerCreatorWindow : Window, IDisposable
                 {
                     if (actionAt >= 0)
                     {
-                        Helper.Tooltip(PvEActions.Instance.GetActionName(actionAt));
+                        ImGui.SetTooltip(PvEActions.Instance.GetActionName(actionAt));
                     }
                     else if (GroupOfActions.TryGetDefault(actionAt, out var group))
                     {
@@ -189,7 +189,7 @@ public class OpenerCreatorWindow : Window, IDisposable
                     }
                     else
                     {
-                        Helper.Tooltip($"Invalid action id ({actionAt})");
+                        ImGui.SetTooltip($"Invalid action id ({actionAt})");
                     }
                 }
 
